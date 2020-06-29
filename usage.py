@@ -15,13 +15,22 @@ def main(strings=None, files=None):
     ner_dict = model.ner(strings, apply_regex=True)
 
     ner_dict = model.find_from_gazetteers(ner_dict)
-    #ner_dict.append({'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'IT_FISCAL_CODE', 'EU_IBAN', 'NL_CITIZEN_SERVICE_NUMBER', 'UK_NATIONAL_ID_NUMBER', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS', 'IPV4_ADDRESS']})
-    #nlp = spacy.load("en_core_web_sm")
-    #doc = nlp(strings)
-    #displacy.serve(ner_dict, style="ent", manual=True)
-    #options = {'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'IT_FISCAL_CODE', 'EU_IBAN', 'NL_CITIZEN_SERVICE_NUMBER', 'UK_NATIONAL_ID_NUMBER', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS', 'IPV4_ADDRESS']}
-    #displacy.serve(ner_dict, style='ent', options=options)
-    #print(ner_dict)
+
+    #SPACY INTEGRATION
+    '''
+    ner_dict.append({'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'IT_FISCAL_CODE', 'EU_IBAN', 'NL_CITIZEN_SERVICE_NUMBER', 'UK_NATIONAL_ID_NUMBER', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS', 'IPV4_ADDRESS']})
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(strings)
+    displacy.serve(ner_dict, style="ent", manual=True)
+    options = {'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'IT_FISCAL_CODE', 'EU_IBAN', 'NL_CITIZEN_SERVICE_NUMBER', 'UK_NATIONAL_ID_NUMBER', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS', 'IPV4_ADDRESS']}
+    displacy.serve(ner_dict, style='ent', options=options)'''
+
+
+    print(ner_dict)
+    
+    
+    # output a file with all the annotations
+    '''
     file_out = open('out.txt', 'w')
     for ner in ner_dict:
         file_out.write(ner['sentence'])
@@ -29,7 +38,7 @@ def main(strings=None, files=None):
             file_out.write(ent['type'])
             file_out.write(ent['value'])
             file_out.write('\n')
-    file_out.close()
+    file_out.close()'''
 
 
 if __name__ == '__main__':

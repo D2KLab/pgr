@@ -26,9 +26,8 @@ print(cwd)
 #!cd simpletransformers; pip install . #install local simpletransformers lib
 
 # lib dir 'root/usr/local/lib/python3.6/dist_packages/simpletransformers'
-
-from simpletransformers.ner.ner_model import NERModel'''
-
+'''
+from simpletransformers.ner.ner_model import NERModel
 
 # Create a NERModel
 model = NERModel('bert', 'bert-base-multilingual-uncased', args={'classification_report': True, 'overwrite_output_dir': True, 'do_lower_case': True, 'num_train_epochs': 5, 'fp16': False, 'train_batch_size': 32, 'eval_batch_size': 32, 'logging_steps': 2741, 'save_steps': 2741, 'evaluate_during_training': True})
@@ -38,7 +37,6 @@ model = NERModel('bert', 'bert-base-multilingual-uncased', args={'classification
 # Train the model
 model.train_model('MLANG/wikinerMLANG.conll.train', eval_df='MLANG/wikinerMLANG.conll.val')
 
-from simpletransformers.ner.ner_model import NERModel
 model = NERModel('bert', 'outputs/best_model/', args={'classification_report': True, 'overwrite_output_dir': True, 'do_lower_case': True, 'num_train_epochs': 5, 'fp16': False, 'train_batch_size': 32, 'eval_batch_size': 32, 'logging_steps': 2741, 'save_steps': 2741, 'evaluate_during_training': True})
 
 '''result = model.eval_model('data/MLANG/val.txt')
@@ -48,10 +46,6 @@ result = model.eval_model('data/MLANG/test.txt')
 result = model.eval_model('data/it/val.txt')
 
 result = model.eval_model('data/it/test.txt')
-
-result = model.eval_model('data/nl/val.txt')
-
-result = model.eval_model('data/nl/test.txt')
 
 result = model.eval_model('data/en/val.txt')
 
