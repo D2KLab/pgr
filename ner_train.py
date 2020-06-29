@@ -35,7 +35,7 @@ model = NERModel('bert', 'bert-base-multilingual-uncased', args={'classification
 #model.predict(["Mr. Robinson"])
 
 # Train the model
-model.train_model('MLANG/wikinerMLANG.conll.train', eval_df='MLANG/wikinerMLANG.conll.val')
+model.train_model('multilang/wikinerMLANG.conll.train', eval_df='multilang/wikinerMLANG.conll.val')
 
 model = NERModel('bert', 'outputs/best_model/', args={'classification_report': True, 'overwrite_output_dir': True, 'do_lower_case': True, 'num_train_epochs': 5, 'fp16': False, 'train_batch_size': 32, 'eval_batch_size': 32, 'logging_steps': 2741, 'save_steps': 2741, 'evaluate_during_training': True})
 
