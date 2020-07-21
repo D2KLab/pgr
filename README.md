@@ -22,5 +22,5 @@ And use ```deactivate``` to disable it.
 Once your virtual is activated, you can install the external libraries:
 
 ```python
-pip -r install requirements.txt
+pip3 -r install requirements.txt
 ```
