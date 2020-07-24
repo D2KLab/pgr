@@ -25,8 +25,10 @@ runs/
 
 transner/multilang_uncased/
 
-wikiner_tools/__pycache__/
-wikiner_tools/wikiner_conll/
+wikiner_tools/wikiner_conll/en/
+wikiner_tools/wikiner_conll/es/
+wikiner_tools/wikiner_conll/es_balanced/
+wikiner_tools/wikiner_conll/it/
 wikiner_tools/wikiner_original/
 
 nohup.out
