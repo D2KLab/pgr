@@ -1,32 +1,35 @@
 import pdb
 import argparse
 from transner import Transner
-from doc2txt import convert_to_txt, text2str
+import doc2txt, aggregator, generator
 
 import spacy
 from spacy import displacy
 
 
 def main(strings=None, files=None):
-    model = Transner(pretrained_model='multilang_uncased', use_cuda=False)
-    file = convert_to_txt(files)
-    strings = text2str(file)
+    model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=1)
 
-    ner_dict = model.ner(strings, apply_regex=True)
+    file = doc2txt.convert_to_txt(files)
+    #strings = text2str(file)
 
+    ner_dict = model.ner(doc2txt.text2str(file), apply_regex=False)
+    print('ner finished, traslating to dict...')
     ner_dict = model.find_from_gazetteers(ner_dict)
 
-    #SPACY INTEGRATION
-    '''
-    ner_dict.append({'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'IT_FISCAL_CODE', 'EU_IBAN', 'NL_CITIZEN_SERVICE_NUMBER', 'UK_NATIONAL_ID_NUMBER', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS', 'IPV4_ADDRESS']})
-    nlp = spacy.load("en_core_web_sm")
-    doc = nlp(strings)
+    '''#SPACY INTEGRATION
+    ner_dict.append({'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS']})
+    #nlp = spacy.load("en_core_web_sm")
+    #doc = nlp(strings)
     displacy.serve(ner_dict, style="ent", manual=True)
-    options = {'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'IT_FISCAL_CODE', 'EU_IBAN', 'NL_CITIZEN_SERVICE_NUMBER', 'UK_NATIONAL_ID_NUMBER', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS', 'IPV4_ADDRESS']}
+    options = {'ents': ['PERSON', 'LOCATION', 'ORGANIZATION', 'MISCELLANEOUS', 'EU_PHONE_NUMBER', 'EMAIL_ADDRESS']}
     displacy.serve(ner_dict, style='ent', options=options)'''
 
-
-    print(ner_dict)
+    
+    aggregated_ner_dict = aggregator.aggregate_ner_dict(ner_dict)
+    
+    pathway = generator.generate(aggregated_ner_dict)
+    #pdb.set_trace()
     
     
     # output a file with all the annotations
@@ -39,7 +42,6 @@ def main(strings=None, files=None):
             file_out.write(ent['value'])
             file_out.write('\n')
     file_out.close()'''
-
 
 if __name__ == '__main__':
     """Input example:
@@ -64,8 +66,17 @@ if __name__ == '__main__':
         help='List of files to be converted before transner',
         required=False
     )
+
+    parser.add_argument(
+        '-e',
+        '--encoding',
+        help='Specify encoding. Default is UTF-8.',
+        required=False
+    )
     args = parser.parse_args()
 
+
     main(files=args.files)
+
     
     

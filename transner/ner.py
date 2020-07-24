@@ -5,6 +5,9 @@ import re
 import pandas as pd
 from simpletransformers.ner.ner_model import NERModel
 
+from scipy.special import softmax
+import numpy as np
+
 from .utils import NERSeparatePunctuations
 
 
@@ -46,9 +49,9 @@ _REGEX_PATTERNS = {#'IT_FISCAL_CODE': _CLEAN_START_REGEX + r'[A-Z]{6}[0-9]{2}[A-
 
 class Transner():
 
-    def __init__(self, pretrained_model, use_cuda):
+    def __init__(self, pretrained_model, use_cuda, cuda_device):
         pretrained_path =  os.path.join('transner/', pretrained_model)
-        self.model = NERModel('bert', pretrained_path, use_cuda=use_cuda, args={'no_cache': True, 'use_cached_eval_features': False, 'process_count': 1, 'silent': True})
+        self.model = NERModel('bert', pretrained_path, use_cuda=use_cuda, args={'no_cache': True, 'use_cached_eval_features': False, 'process_count': 1, 'silent': True}, cuda_device=cuda_device)
         self.preprocesser = NERSeparatePunctuations()
         worlddb = pd.read_csv(WORLD_CITIES_DB)
         self.cities_set = set(worlddb['city'].str.lower())
@@ -80,11 +83,11 @@ class Transner():
 
         processed_input = self.preprocesser.preprocess(input_strings, do_lower_case=True)
         # extract PER, LOC, ORG, MISC entity types
-        predictions = self.model.predict(processed_input)[0]
-        assert len(predictions) == len(input_strings)
+        #predictions = self.model.predict(processed_input)[0]
+        predictions = self.model.predict(processed_input)
+        assert len(predictions[0]) == len(input_strings)
 
         ner_dict = self.make_ner_dict(processed_input, predictions)
-
         # post processing: get original strings (no preprocessed) and adjust the entities offset
         self.preprocesser.adjustEntitiesOffset([r['entities'] for r in ner_dict], adjust_case=True)
         for r, original in zip(ner_dict, input_strings):
@@ -110,6 +113,7 @@ class Transner():
                 for match in re.finditer(regex, item['sentence']):
                 #   match = re.search(regex, item['sentence'])
                     if match:
+                        print(match)
                         matched_string = match.group(0)
                         offset = match.span(0)[0]
                         # remove initial or final space/punctuation if it was catched by regex
@@ -161,9 +165,10 @@ class Transner():
                     ]
                 }
             """
+
             result_dict = []
             curr_res = {}
-            for s, prediction in zip(strings, predictions):
+            for s, prediction, logit in zip(strings, predictions[0], predictions[1]):
                 curr_res = dict()
 
                 curr_res['sentence'] = s
@@ -174,7 +179,15 @@ class Transner():
                 active_e_type = None
                 active_e_value = ''
 
-                for e_pred in prediction:
+                for e_pred, e_log in zip(prediction, logit):
+
+                    confidence_values = list(e_log.values())
+                    # reshape the confidence_values to (1, 9)
+                    confidence_values = confidence_values[0][0]
+                    # take the confidence values among confidences
+                    confidence_softmax = softmax(confidence_values)
+                    confidence = confidence_softmax[np.argmax(confidence_softmax)]
+
                     kv_pair = list(e_pred.items())
                     assert len(kv_pair) == 1
 
@@ -183,7 +196,7 @@ class Transner():
                     if e_type[0] == 'B':
                         #if a entity is still active, close it
                         if active_e_type:
-                            curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset}
+                            curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset, 'confidence': confidence}
                             # often the string "mario è" is tagged with a person. This operation clean this problem
                             if curr_entity['value'][-2:] == ' è':
                                 curr_entity['value'] = curr_entity['value'][:-2] 
@@ -201,13 +214,13 @@ class Transner():
                         elif e_type[2:] == active_e_type:
                             active_e_value += e_value + ' ' #! active_e_value += re.sub(r'[^\w\s]', '', e_value)
                         else:
-                            curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset}
+                            curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset, 'confidence': confidence}
                             curr_res['entities'].append(curr_entity)
                             beginning_offset = curr_offset
                             active_e_type = e_type[2:]
                             active_e_value += e_value + ' ' #! active_e_value += re.sub(r'[^\w\s]', '', e_value)
                     elif e_type[0] == 'O' and active_e_type:
-                        curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset}
+                        curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset, 'confidence': confidence}
                         # often the string "mario è" is tagged with a person. This operation clean this problem
                         if curr_entity['value'][-2:] == ' è':
                             curr_entity['value'] = curr_entity['value'][:-2] 
@@ -221,53 +234,9 @@ class Transner():
 
                     #if last prediction for that string, then save the active entities
                     if curr_offset >= len(s) and active_e_type:
-                        curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset}
+
+                        curr_entity = {'type': _SHORT_TO_TYPE[active_e_type], 'value': active_e_value[:-1], 'offset': beginning_offset, 'confidence': confidence}
                         curr_res['entities'].append(curr_entity)
                 result_dict.append(curr_res)
 
             return result_dict
-
-    def aggregate_ner_dict(self, result_dict):
-            """
-            Arguments:
-                result_dict {dict} -- dictionary of predictions
-
-            Returns:
-                dict -- format: 
-                {'text': ..., 
-                'entities' :{
-                    'type':  [{'value': , 'offset': }],
-                    ...
-                    }
-                }
-            """
-            aggregated_dict = {
-                'text': '', 
-                'entities': {
-                    'PERSON': [],
-                    'LOCATION': [],
-                    'ORGANIZATION': [],
-                    'MISCELLANEOUS': [],
-                    'EU_PHONE_NUMBER': [],
-                    'EMAIL_ADDRESS': []
-                }
-            }
-
-            offset = 0
-            
-            for element in result_dict:
-
-                for entity in element['entities']:
-                    aggregated_dict['entities'][entity['type']].append({
-                        'value': entity['value'],
-                        'offset': offset + entity['offset'],
-                        #test end_offset
-                        'end_offset': offset + entity['offset'] + len(entity['value'])
-                    })
-
-                offset = offset + len(element['sentence'])
-                aggregated_dict['text'] = aggregated_dict['text'] + element['sentence']
-            
-            print(aggregated_dict)
-
-            return aggregated_dict

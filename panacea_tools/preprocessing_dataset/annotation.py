@@ -3,10 +3,10 @@ import ast
 import os 
 
 def annotate(path):
-    data = open(path + '/ouput.txt', 'r').readlines()
+    data = open(path + '/output.txt', 'r').readlines()
 
     out = open('conll_final/'+ os.path.splitext(os.path.basename(path))[0] + '.conll', 'w')
-    print('Created file ' + out.name)
+    #print('Created file ' + out.name)
 
     ners = []
 
@@ -49,8 +49,14 @@ def annotate(path):
 
 if __name__ == "__main__":
     for subdir, dirs, files in os.walk('xmls_tree'):
-        print('Parsing xml in ' + subdir)
-        annotate(subdir)
+        for dir in dirs:
+
+            #print('Parsing xml in ' + subdir + '/' + dir)
+            try:
+                annotate(subdir+'/'+dir)
+            except OSError as e:
+                print(str(e))
+                continue
 
     if os.path.exists('panacea_dataset.conll'): os.remove('panacea_dataset.conll') 
     out = open('panacea_dataset.conll', 'a')

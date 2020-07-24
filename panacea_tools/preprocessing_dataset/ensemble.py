@@ -5,14 +5,14 @@ import os
 from os import path
 
 if __name__ == "__main__":
-    for file in os.listdir('xmls'):
-        file_name, file_extension = os.path.splitext(os.path.basename(file))
+    #for file in os.listdir('xmls'):
+    #    file_name, file_extension = os.path.splitext(os.path.basename(file))
         #print(file)
-        file_index = file_name.split('-')[0]
+    #    file_index = file_name.split('-')[0]
 
-        if not os.path.exists('xmls_tree/' + file_index):
-            os.mkdir('xmls_tree/' + file_index)
-        os.rename("xmls/" + file_name + file_extension, 'xmls_tree/' + file_index + '/' + file_name + file_extension)
+    #    if not os.path.exists('xmls_tree/' + file_index):
+    #        os.mkdir('xmls_tree/' + file_index)
+    #    os.rename("xmls/" + file_name + file_extension, 'xmls_tree/' + file_index + '/' + file_name + file_extension)
 
     out = open('log.txt', 'w')
     for subdir, dirs, files in os.walk('xmls_tree'):
