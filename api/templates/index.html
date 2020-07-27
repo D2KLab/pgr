@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>File Upload</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.js"></script>
+    <script type="text/javascript">
+
+    Dropzone.autoDiscover = false;
+
+    $(document).ready(function() {
+
+      var myDropzone = new Dropzone("#submit", {
+        url:"/", 
+        autoProcessQueue: false, 
+        parallelUploads: 10 // Number of files process at a time (default 2)
+      });
+
+      console.log(myDropzone)
+
+      $('#uploadfiles').click(function(){
+         myDropzone.processQueue();
+      });
+    });
+
+    </script>  
+  </head>
+  <body>
+    
+    <div class="container" >
+      <div class='content'>
+         <form action="/" class="dropzone" id="submit"> </form> 
+      </div>
+
+      <input type="button" id='uploadfiles' value='Upload Files' >
+    </div>
+    
+
+  </body>
+</html>
