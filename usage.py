@@ -6,6 +6,8 @@ import doc2txt, aggregator, generator
 import spacy
 from spacy import displacy
 
+import pandas as pd
+
 
 def main(strings=None, files=None):
     model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=1)
@@ -29,7 +31,10 @@ def main(strings=None, files=None):
     aggregated_ner_dict = aggregator.aggregate_ner_dict(ner_dict)
     
     pathway = generator.generate(aggregated_ner_dict)
-    #pdb.set_trace()
+
+    pathway.to_json('./output_values.txt', orient='records')
+
+    pdb.set_trace()
     
     
     # output a file with all the annotations
