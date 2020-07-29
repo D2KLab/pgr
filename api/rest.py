@@ -4,6 +4,9 @@ from flask import Flask, render_template, request, redirect, url_for, abort, \
     send_from_directory
 from werkzeug.utils import secure_filename
 
+import sys
+sys.path.append('../')
+
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024 #10MB
 app.config['UPLOAD_EXTENSIONS'] = ['.docx', '.doc', '.pdf', '.txt']
@@ -29,6 +32,8 @@ def upload_files():
         if file_ext not in app.config['UPLOAD_EXTENSIONS'] :
             return "Invalid file", 400
         uploaded_file.save(os.path.join(app.config['UPLOAD_PATH'], filename))
+
+        usage.main(uploaded_file)
     return '', 204
 
 @app.route('/uploads/<filename>')
