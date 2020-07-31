@@ -20,10 +20,11 @@
     - [Named Entity Recognition](#named-entity-recognition)
     - [Entity Aggregation](#entity-aggregation)
     - [Pathway Generation](#pathway-generation)
+* [Output files](#output-files)
 
 ## Preliminary Operations
 
-This repo joins and extends the works present in Transer (https://github.com/D2KLab/Transner) and doc2txt(https://github.com/D2KLab/doc2txt): please see this two repositories in order to get started.
+This repo joins and extends the works present in Transer (https://github.com/D2KLab/Transner) and doc2txt (https://github.com/D2KLab/doc2txt): please see this two repositories in order to get started.
 
 ### Setup virtual environment
 
@@ -50,19 +51,164 @@ pip3 install -r requirements.txt
 
 ### Pre trained Model
 
-In order to use a pretrained model, download one of the models present at the following link: and insert it in the folder named ```transner```
+In order to use a pretrained model, download one of the models present at the following link: https://istitutoboella-my.sharepoint.com/:f:/g/personal/alberto_benincasa_linksfoundation_com/EtYto0b7K7NKlfjPdGRWJf0BXyz-m2GxT-FoeGIc8BTNGg?e=IwFbwd and insert it in the folder named ```transner```
 
 ## Pathway Generation pipe
 test
 
 ### Document conversion
-test
+The purpose of this module is to take a file and convert it into one that can be sent as input to the Entity Recognition Model to be able to annotate it.
+
+Here, the file is firstly converted into the ```.txt``` format and it is subsequently cleaned of all the URLs present, each replaced by a symble ```[cont]``` where ```cont``` is an incremental counter; at the end of this operation, a new file is created, in which are mapped the pairs ```cont - URL```.
+After that, the text is formatted in order to have a complete sentece (ended with a dot) for each line.
+
+Finally, the text is saved in file with the same name of the original one with the extension ```.txt```.
+In order to integrate with the next module, there is also a function to convert each line of the file into a string that is inserted into a Python List.
 
 ### Named Entity Recognition
-test
+This module take as input a list of strings, like
+
+```python
+strings_list = [
+  "Mario Rossi è nato all'ospedale San Raffaele",
+  "Marco e Luca sono andati a Magenta in aereo"                  
+]
+```
+and returns as output a dict object containing the extracted entities, with the following format:
+
+```python
+{
+  "results": [
+    {
+      "entities": [
+        {
+          "start_offset": 0,
+          "end_offset": 11,
+          "confidence": 0.99,
+          "type": "PERSON",
+          "value": "mario rossi"
+        },
+        {
+          "start_offset": 21,
+          "end_offset": 42,
+          "confidence": 0.99,
+          "type": "ORGANIZATION",
+          "value": "ospedale San Raffaele"
+        }
+      ],
+      "sentence": "Mario Rossi è nato all'ospedale San Raffaele"
+    },
+    {
+      "entities": [
+        {
+          "start_offset": 0,
+          "end_offset": 5,
+          "confidence": 0.99,
+          "type": "PERSON",
+          "value": "marco"
+        },
+        {
+          "start_offset": 8,
+          "end_offset": 12,
+          "confidence": 0.99,
+          "type": "PERSON",
+          "value": "luca"
+        },
+        {
+          "start_offset": 27,
+          "end_offset": 34,
+          "confidence": 0.99,
+          "type": "LOCATION",
+          "value": "magenta"
+        },
+        {
+          "start_offset": 29,
+          "end_offset": 37,
+          "confidence": 0.99,
+          "type": "MISCELLANEOUS",
+          "value": "in aereo"
+        }
+      ],
+      "sentence": "Marco e Luca sono andati a Magenta in aereo"
+    }
+  ],
+  "timestamp": 1581065432.7972977
+}
+```
 
 ### Entity Aggregation
-test
+The purpose of this module is to take as input the result of the previous module and then aggregate the dictionary into a single output.
 
+```python
+{
+  "text" : "Mario Rossi è nato all'ospedale San Raffaele. Marco e Luca sono andati a Magenta in aereo",
+  "entities": [
+    "LOCATION": [
+        {
+          "start_offset": 73,
+          "end_offset": 80,
+          "confidence": 0.99,
+          "value": "magenta"
+        }
+    ],
+    "ORGANIZATION": [
+        {
+          "start_offset": 23,
+          "end_offset": 44,
+          "confidence": 0.99,
+          "value": "ospedale San Raffaele"
+        }
+    ],
+    "PERSON": [
+        {
+          "start_offset": 0,
+          "end_offset": 11,
+          "confidence": 0.99,
+          "value": "mario rossi"
+        },
+        {
+          "start_offset": 46,
+          "end_offset": 51,
+          "confidence": 0.99,
+          "value": "marco"
+        },
+        {
+          "start_offset": 54,
+          "end_offset": 58,
+          "confidence": 0.99,
+          "value": "luca"
+        }
+    ],
+    "MISCELLANEOUS": [
+        {
+          "start_offset": 82,
+          "end_offset": 90,
+          "confidence": 0.99,
+          "value": "in aereo"
+        }
+    ]
+  ]
+}
+
+```
 ### Pathway Generation
-test
+In this module, the entities are grouped as follows:
+
+- WHERE tag gropus entities of type ORGANIZATION, LOCATION
+- WHEN tag gropus entities of type TIME
+- HOW tag gropus entities of type MISCELLANEOUS
+
+The output is formatted as follows:
+
+```
+[
+  {"step": "how", "entity": "in aereo"},
+  {"step": "where", "entity": "ospedale San Raffaele"},
+  {"step": "where", "entity": "magenta"},
+  {"step": "when", "entity": ""}
+
+]
+```
+
+NB: non abbiamo when perchè non abbiamo ancora inserito il tag TIME
+## Output files
