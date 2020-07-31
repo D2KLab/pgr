@@ -217,3 +217,7 @@ The output is formatted as follows:
 
 NB: non abbiamo when perchè non abbiamo ancora inserito il tag TIME
 ## Output files
+
+We have two output files
+- ```doccano_annotated.json``` is the file we can import in the Doccano Sequence Labeling project type, in order to visualize the tagged entities
+- ```doccano_pathway.jsonl``` is the file we can import in the Doccano Sequence to Sequence project type, in order to visualize the pathway text
