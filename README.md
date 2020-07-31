@@ -194,13 +194,13 @@ The purpose of this module is to take as input the result of the previous module
 ### Pathway Generation
 In this module, the entities are grouped as follows:
 
-- WHERE tag gropus entities of type ORGANIZATION, LOCATION
-- WHEN tag gropus entities of type TIME
-- HOW tag gropus entities of type MISCELLANEOUS
+- **WHERE** groups entities of type ORGANIZATION, LOCATION
+- **WHEN** groups entities of type TIME
+- **HOW** groups entities of type MISCELLANEOUS
 
 The output is formatted as follows:
 
-```
+```python
 [
   {"step": "how", "entity": "in aereo"},
   {"step": "where", "entity": "ospedale San Raffaele"},
