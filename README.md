@@ -21,6 +21,7 @@
     - [Entity Aggregation](#entity-aggregation)
     - [Pathway Generation](#pathway-generation)
 * [Output files](#output-files)
+* [Clean Docker setup](#clean-docker-setup)
 
 ## Preliminary Operations
 
@@ -221,3 +222,12 @@ NB: non abbiamo when perchè non abbiamo ancora inserito il tag TIME
 We have two output files
 - ```doccano_annotated.json``` is the file we can import in the Doccano Sequence Labeling project type, in order to visualize the tagged entities
 - ```doccano_pathway.jsonl``` is the file we can import in the Doccano Sequence to Sequence project type, in order to visualize the pathway text
+
+## Clean Docker setup
+
+```
+docker-compose down
+docker rm -f $(docker ps -a -q)
+docker volume rm $(docker volume ls -q)
+docker-compose docker-compose.dev.yml up -d
+```
