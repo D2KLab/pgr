@@ -54,7 +54,12 @@ pip3 install -r requirements.txt
 In order to use a pretrained model, download one of the models present at the following link: https://istitutoboella-my.sharepoint.com/:f:/g/personal/alberto_benincasa_linksfoundation_com/EtYto0b7K7NKlfjPdGRWJf0BXyz-m2GxT-FoeGIc8BTNGg?e=IwFbwd and insert it in the folder named ```transner```
 
 ## Pathway Generation pipe
-test
+
+Example of use: 
+
+```bash
+python3 usage.py --files Documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf
+```
 
 ### Document conversion
 The purpose of this module is to take a file and convert it into one that can be sent as input to the Entity Recognition Model to be able to annotate it.
