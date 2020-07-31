@@ -31,6 +31,32 @@ def text_to_doccano(ner_dict, filename):
     file_out.write(str(json.dumps(labels[0], ensure_ascii=False)))
     file_out.write('\n')
 
+def pathway_to_doccano(json_pathway, filename):
+    pathway_jsonl = []
+    where_dict = {"text": "where", "labels": [], "meta": filename}
+    how_dict = {"text": "how", "labels": [], "meta": filename}
+    when_dict = {"text": "when", "labels": [], "meta": filename}
+
+    for entity in json_pathway:
+        if len(entity["entity"].strip()) > 0:
+            if entity["step"] == "where":
+                if entity["entity"].strip() not in where_dict["labels"]:
+                    where_dict["labels"].append(entity["entity"].strip())
+            elif entity["step"] == "how":
+                if entity["entity"].strip() not in how_dict["labels"]:
+                    how_dict["labels"].append(entity["entity"].strip())
+            elif entity["step"] == "when":
+                if entity["entity"].strip() not in when_dict["labels"]:
+                    when_dict["labels"].append(entity["entity"].strip())
+    
+    pathway_jsonl.append(where_dict)
+    pathway_jsonl.append(when_dict)
+    pathway_jsonl.append(how_dict)
+    file_out = open('./doccano_pathway.jsonl', 'w', encoding='utf-8')
+    for element in pathway_jsonl:
+        file_out.write(str(json.dumps(element, ensure_ascii=False)))
+        file_out.write('\n')
+
 def main(strings=None, files=None):
     model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=1)
 
@@ -44,8 +70,13 @@ def main(strings=None, files=None):
     text_to_doccano(aggregated_ner_dict, os.path.splitext(os.path.basename(files))[0])
 
     pathway = generator.generate(aggregated_ner_dict)
-
+    #expected json output -> 
+    #{"text": "how", "labels": ["text1", "text2", ...], "meta": "filename"}
+    #{"text": "when", "labels": ["text1", "text2", ...], "meta": "filename"}
+    #{"text": "where", "labels": ["text1", "text2", ...], "meta": "filename"}
     json_pathway = pathway.to_json(orient='records')
+    pathway_to_doccano(json.loads(json_pathway), os.path.splitext(os.path.basename(files))[0])
+    pdb.set_trace()
 
 if __name__ == '__main__':
     """Input example:
