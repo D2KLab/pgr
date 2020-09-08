@@ -142,7 +142,7 @@ class Transner():
                         curr_str = ' '.join(substring)
                         if curr_str in self.cities_set:
                             offset = entity['value'].lower().index(curr_str)
-                            item['entities'].append({'type': 'LOC', 'value': entity['value'][offset:offset+len(curr_str)], 'offset': offset+entity['offset']})
+                            item['entities'].append({'type': _SHORT_TO_TYPE['LOC'], 'value': entity['value'][offset:offset+len(curr_str)], 'offset': offset+entity['offset'], 'confidence': entity['confidence']})
 
         return ner_dict
 
@@ -186,7 +186,7 @@ class Transner():
                     confidence_values = confidence_values[0][0]
                     # take the confidence values among confidences
                     confidence_softmax = softmax(confidence_values)
-                    confidence = confidence_softmax[np.argmax(confidence_softmax)]
+                    confidence = float(confidence_softmax[np.argmax(confidence_softmax)])
 
                     kv_pair = list(e_pred.items())
                     assert len(kv_pair) == 1

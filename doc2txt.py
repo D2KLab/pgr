@@ -2,6 +2,12 @@ import os
 import sys
 import re
 import pdb
+import remove_header_footer
+
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
+
+from docx import Document
 
 try:
     import textract
@@ -29,12 +35,20 @@ def do_conversion(file):
     file_name, file_extension = os.path.splitext(file)
 
     if file_extension in white_list_extension_files:
+
+        if file_extension == ".docx":
+            remove_header_footer(file)
+
         text_bytes = textract.process(file, encoding='utf-8', extension=file_extension)
         text = text_bytes.decode('utf-8')#.encode('utf-8')
 
         f = open(file_name + '.txt', 'w')
-        
+
+        if file_extension == ".pdf":
+            text = purge_index(text, file)
+
         data = purge_urls(text)
+                
         f.write(data)
         f.close()
         return data
@@ -81,7 +95,8 @@ def normalization(text, delimiter='.'):
     datas = ''
     for s in sentenceSplit:
         #data = s.strip(s.strip() + ".\n")
-        datas = datas + s.strip() + ".\n"
+        if len(s.strip()) > 0 and any(c.isalpha() for c in s):
+            datas = datas + s.strip() + ".\n"
         
 
     #file_output.write(datas)
@@ -134,7 +149,39 @@ def purge_urls(text):
 
     return normalization(elements)
 
-if __name__ == "__main__":
-    #doc2txt(sys.argv[1:])
-    #normalization(sys.argv[1])
-    purge_urls(sys.argv[1])
+def purge_index(data, file):
+
+    titles = []
+
+    datas = ''
+
+    fp = open(file, 'rb')
+    parser = PDFParser(fp)
+    document = PDFDocument(parser)
+    # Get the outlines of the document.
+    outlines = document.get_outlines()
+
+    for (level,title,dest,a,se) in outlines:
+        #titles.append(''.join([i for i in title if not i.isdigit() and i != '.']).strip())
+        titles.append(title.strip())
+
+    bc_text = ' '.join(data.split('\n'))
+    
+    #sentenceSplit = bc_text.split(".")
+
+    for title in titles:
+        if re.search(title, bc_text, re.IGNORECASE):
+            bc_text = re.sub(title, '', bc_text, flags=re.IGNORECASE)
+
+    return bc_text
+
+def remove_header_footer(file):
+    
+    document = Document(file)
+
+    ''' rimuoviamo header & footer '''
+    for i in range(len(document.sections)):
+        document.sections[i].header.is_linked_to_previous = True
+        document.sections[i].footer.is_linked_to_previous = True
+
+    document.save(os.path.splitext(file)[0] + '.docx') 

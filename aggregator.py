@@ -26,10 +26,9 @@ def aggregate_ner_dict(result_dict):
         }
     }
     offset = 0
-    
+
     for element in result_dict:
-    
-        for entity in element['entities']:
+        for entity in element['entities']:          
             aggregated_dict['entities'][entity['type']].append({
                 'value': entity['value'],
                 'confidence': entity['confidence'],

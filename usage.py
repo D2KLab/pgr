@@ -4,9 +4,6 @@ from transner import Transner
 import doc2txt, aggregator, generator
 import json
 
-import spacy
-from spacy import displacy
-
 import pandas as pd
 import os
 
@@ -27,7 +24,7 @@ def text_to_doccano(ner_dict, filename):
 
         labels.append(label)
     
-    file_out = open('./doccano_annotated.json', 'w', encoding='utf-8')
+    file_out = open(filename +'_ner.json', 'w', encoding='utf-8')
     file_out.write(str(json.dumps(labels[0], ensure_ascii=False)))
     file_out.write('\n')
 
@@ -52,31 +49,31 @@ def pathway_to_doccano(json_pathway, filename):
     pathway_jsonl.append(where_dict)
     pathway_jsonl.append(when_dict)
     pathway_jsonl.append(how_dict)
-    file_out = open('./doccano_pathway.jsonl', 'w', encoding='utf-8')
+    file_out = open(filename +'_pathway.jsonl', 'w', encoding='utf-8')
     for element in pathway_jsonl:
         file_out.write(str(json.dumps(element, ensure_ascii=False)))
         file_out.write('\n')
 
 def main(strings=None, files=None):
-    model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=1)
+    model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=2)
 
+    # conversion
     file = doc2txt.convert_to_txt(files)
+    text_list = doc2txt.text2str(file)
 
-    ner_dict = model.ner(doc2txt.text2str(file), apply_regex=False)
-    print('ner finished, traslating to dict...')
+    # annotation
+    ner_dict = model.ner(text_list, apply_regex=False)
     ner_dict = model.find_from_gazetteers(ner_dict)
     
-    aggregated_ner_dict = aggregator.aggregate_ner_dict(ner_dict)
-    text_to_doccano(aggregated_ner_dict, os.path.splitext(os.path.basename(files))[0])
+    # Aggregator
+    aggregated_ner_dict = aggregator.aggregate_ner_dict(ner_dict)  
 
+    # Pathway generation
     pathway = generator.generate(aggregated_ner_dict)
-    #expected json output -> 
-    #{"text": "how", "labels": ["text1", "text2", ...], "meta": "filename"}
-    #{"text": "when", "labels": ["text1", "text2", ...], "meta": "filename"}
-    #{"text": "where", "labels": ["text1", "text2", ...], "meta": "filename"}
     json_pathway = pathway.to_json(orient='records')
-    pathway_to_doccano(json.loads(json_pathway), os.path.splitext(os.path.basename(files))[0])
-    pdb.set_trace()
+
+    text_to_doccano(aggregated_ner_dict, os.path.splitext(files)[0])
+    pathway_to_doccano(json.loads(json_pathway), os.path.splitext(files)[0])
 
 if __name__ == '__main__':
     """Input example:
