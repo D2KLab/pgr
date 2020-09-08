@@ -43,7 +43,8 @@ class WikiNER(Dataset):
 
         article_end = True
         just_started = True
-        with open(file_path, 'r', encoding='ISO-8859-1') as file:
+        # BE CAREFUL. FOR SPANISH WIKINER YOU NEED ISO-8859-1 ENCODING
+        with open(file_path, 'r', encoding='utf-8') as file:
             curr_words = []
             curr_labels = []
 
