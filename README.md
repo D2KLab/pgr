@@ -37,7 +37,7 @@ pip3 install -r requirements.txt
 for training
 
 ```
-...
+python3 ner_train.py
 ```
 
 ## aggregate
