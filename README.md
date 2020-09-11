@@ -25,5 +25,27 @@ Once your virtual is activated, you can install the external libraries:
 pip3 install -r requirements.txt
 ```
 
-# Pathway Generation Pipe
+# Pipe
 
+## convert
+
+## annotate
+
+``` .... 
+```
+
+for training
+
+In the ner_train.py you need to edit the line:
+```
+model.train_model(<path_to_dataset_train>, eval_df=<path_to_dataset_val>)
+```
+inserting the correct paths to the train and val datasets.
+
+```
+python3 ner_train.py
+```
+
+## aggregate
+
+## generate
