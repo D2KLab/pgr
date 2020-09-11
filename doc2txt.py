@@ -2,7 +2,6 @@ import os
 import sys
 import re
 import pdb
-import remove_header_footer
 
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument

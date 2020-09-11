@@ -5,12 +5,11 @@ import json
 import os
 
 def main(files=None):
-    model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=2)
+    model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=4)
     file = open(files, 'r')
     text_list = doc2txt.text2str(file.read())
 
-    ner_dict = model.ner(text_list, apply_regex=False)
-    ner_dict = model.find_from_gazetteers(ner_dict)
+    ner_dict = model.ner(text_list)
 
     json_file = json.dumps(ner_dict)
     f = open(os.path.splitext(files)[0] +'.json', 'w')
