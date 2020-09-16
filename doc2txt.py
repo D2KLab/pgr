@@ -47,7 +47,9 @@ def do_conversion(file):
             text = purge_index(text, file)
 
         data = purge_urls(text)
-                
+
+        # remove • unicode and substitute with -
+        data = re.sub('\u2022', '-', data)   
         f.write(data)
         f.close()
         return data
@@ -57,7 +59,7 @@ def do_conversion(file):
             print("%s\n" % (ext))
         sys.exit(2)
 
-def text2str(data, delimiter='.'):
+def to_list(data, delimiter='.'):
     #file = open(path, 'r')
     unparsed_info = data
     element_list = [] # Make an empty list
@@ -93,9 +95,9 @@ def normalization(text, delimiter='.'):
     
     datas = ''
     for s in sentenceSplit:
-        #data = s.strip(s.strip() + ".\n")
-        if len(s.strip()) > 0 and any(c.isalpha() for c in s):
-            datas = datas + s.strip() + ".\n"
+        clean_s = re.sub('\s\s+', ' ', s)
+        if len(clean_s.strip()) > 0 and any(c.isalpha() for c in clean_s):
+            datas = datas + clean_s.strip() + ".\n"
         
 
     #file_output.write(datas)
@@ -120,7 +122,6 @@ def purge_urls(text):
     #file_index = open(relative_path + '/' + file_name + '_index.txt', 'w')
 
     unparsed_info = text.replace('-\n', '')
-    #print(unparsed_info)
     index_count = 1
 
     urls = Find(unparsed_info)
@@ -140,8 +141,6 @@ def purge_urls(text):
         if char_presence and not chapter_present:
             #file_output.write(element + '\n')
             elements = elements + element +'\n'
-    #print(elements)
-    #pdb.set_trace()
     #file_output.close()
     #file_input.close()
     #file_index.close()

@@ -4,17 +4,82 @@ from transner import Transner
 import json
 import os
 
-def main(files=None):
+import pdb
+
+from python_sutime.sutime import SUTime
+
+def annotate_transner(sentence_list):
     model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=4)
-    file = open(files, 'r')
-    text_list = doc2txt.text2str(file.read())
+    return model.ner(sentence_list)
 
-    ner_dict = model.ner(text_list)
+def annotate_sutime(ner_dict):
+    for item in ner_dict:
+        text = item['sentence']
+        jar_files = os.path.join(os.path.dirname(__file__) + 'python_sutime/', 'jars')
+        sutime = SUTime(jars=jar_files, mark_time_ranges=True)
 
-    json_file = json.dumps(ner_dict)
-    f = open(os.path.splitext(files)[0] +'.json', 'w')
+        json = sutime.parse(text)
+        
+        for item_sutime in json:
+            item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.7, 'offset': item_sutime['start']})
+
+    return ner_dict
+
+def export_to_json(ner_dict, path):
+    json_file = json.dumps(ner_dict, indent=4)
+    f = open(path +'_ner.json', 'w')
     f.write(json_file)
     f.close()
+
+def aggregate_dict(ner_dict):
+    aggregated_dict = {
+        'text': '', 
+        'entities': []
+    }
+    offset = 0
+
+    for element in ner_dict:
+        for entity in element['entities']:          
+            start_offset = offset + entity['offset']
+            end_offset = offset + entity['offset'] + len(entity['value'])
+            
+            aggregated_dict['entities'].append({
+                    'value': entity['value'],
+                    'confidence': entity['confidence'],
+                    'start_offset': start_offset,
+                    'end_offset': end_offset,
+                    'type': entity['type'] 
+                })
+        
+        offset = offset + len(element['sentence'])
+        aggregated_dict['text'] = aggregated_dict['text'] + element['sentence']
+
+    return aggregated_dict
+
+def export_to_doccano(ner_dict, path):
+
+    doccano_dict = {}
+    doccano_dict['text'] = ner_dict['text']
+    doccano_dict['labels'] = []
+
+    doccano_dict['meta'] = os.path.basename(path)
+
+    for item in ner_dict['entities']:
+        doccano_dict['labels'].append([item['start_offset'], item['end_offset'], item['type']])
+
+    file_out = open(path +'_ner.jsonl', 'w', encoding='utf-8')
+    file_out.write(json.dumps(doccano_dict))
+    file_out.write('\n')
+
+def main(path=None):   
+    sentence_list = doc2txt.to_list(open(path, 'r').read())
+
+    ner_dict = annotate_transner(sentence_list)
+    ner_dict = annotate_sutime(ner_dict)
+   
+    ner_dict = aggregate_dict(ner_dict)
+    export_to_json(ner_dict, os.path.splitext(path)[0])
+    export_to_doccano(ner_dict, os.path.splitext(path)[0])
 
 if __name__ == '__main__':
     """Input example:
@@ -34,4 +99,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(files=args.file)
+    main(path=args.file)

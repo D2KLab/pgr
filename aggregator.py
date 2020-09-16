@@ -1,6 +1,6 @@
 import pdb
 
-def aggregate_ner_dict(result_dict):
+def aggregate_entities(ner_dict):
     """
     Arguments:
         result_dict {dict} -- dictionary of predictions
@@ -15,30 +15,22 @@ def aggregate_ner_dict(result_dict):
         }
     """
     aggregated_dict = {
-        'text': '', 
+        'text': '',
         'entities': {
             'PERSON': [],
             'LOCATION': [],
             'ORGANIZATION': [],
             'MISCELLANEOUS': [],
-            'EU_PHONE_NUMBER': [],
-            'EMAIL_ADDRESS': []
+            'TIME': [],
+            'DOCUMENT': [],
+            'PROCEDURE': []
         }
     }
-    offset = 0
 
-    for element in result_dict:
-        for entity in element['entities']:          
-            aggregated_dict['entities'][entity['type']].append({
-                'value': entity['value'],
-                'confidence': entity['confidence'],
-                'start_offset': offset + entity['offset'],
-                'end_offset': offset + entity['offset'] + len(entity['value'])
-            })
+    aggregated_dict['text'] = ner_dict['text']
 
-        offset = offset + len(element['sentence'])
-        aggregated_dict['text'] = aggregated_dict['text'] + element['sentence']
-    
-    #print(aggregated_dict)
-
+    for entity in ner_dict['entities']:
+        entity_type = entity.pop('type')          
+        aggregated_dict['entities'][entity_type].append(entity) 
+                
     return aggregated_dict

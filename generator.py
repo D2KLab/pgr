@@ -12,20 +12,19 @@ def generate_pathway(ner_dict):
 
     try:
         pathway['when'] = pathway['when'] + ner_dict['entities']['TIME']
-    except KeyError:
-        pass
-    pathway['where'] = pathway['where'] + ner_dict['entities']['LOCATION'] + ner_dict['entities']['ORGANIZATION']
-    pathway['how'] = pathway['how'] + ner_dict['entities']['MISCELLANEOUS']
+        pathway['where'] = pathway['where'] + ner_dict['entities']['LOCATION'] + ner_dict['entities']['ORGANIZATION']
+        pathway['how'] = pathway['how'] + ner_dict['entities']['MISCELLANEOUS'] + ner_dict['entities']['PROCEDURE'] + ner_dict['entities']['DOCUMENT']
+    except KeyError as e:
+        print(e)
 
     return pathway
 
 def filter_pathway(pathway):    
-    #return pathway.loc[(pathway['confidence'] >= 0) & (pathway['pertinence'] >= 0)]
-    return pathway.loc[pathway['confidence'] >= 0]
+    #return pathway.loc[(pathway['confidence'] >= 0) and (pathway['pertinence'] >= 0)]
+    return pathway.loc[pathway['confidence'] >= 0.7]
 
 def compute_pertinence(pathway):
     p_df = pd.DataFrame(columns=['step', 'start_offset', 'end_offset', 'confidence', 'pertinence'])
-    #p_df = pd.DataFrame()
     for e_type, e_values in pathway.items():        
         for e_value in e_values:
             element = {}
