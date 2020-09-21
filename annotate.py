@@ -10,7 +10,7 @@ from python_sutime.sutime import SUTime
 
 def annotate_transner(sentence_list):
     model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=4)
-    return model.ner(sentence_list)
+    return model.ner(sentence_list, apply_regex=True)
 
 def annotate_sutime(ner_dict):
     for item in ner_dict:
@@ -21,7 +21,7 @@ def annotate_sutime(ner_dict):
         json = sutime.parse(text)
         
         for item_sutime in json:
-            item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.7, 'offset': item_sutime['start']})
+            item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.8, 'offset': item_sutime['start']})
 
     return ner_dict
 

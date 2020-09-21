@@ -5,6 +5,7 @@ def generate(ner_dict):
     pathway_aggregated = generate_pathway(ner_dict)
     pathway_df = compute_pertinence(pathway_aggregated)
     pathway = filter_pathway(pathway_df)
+    pathway = remove_duplicates(pathway)
     return pathway
 
 def generate_pathway(ner_dict):
@@ -21,7 +22,7 @@ def generate_pathway(ner_dict):
 
 def filter_pathway(pathway):    
     #return pathway.loc[(pathway['confidence'] >= 0) and (pathway['pertinence'] >= 0)]
-    return pathway.loc[pathway['confidence'] >= 0.7]
+    return pathway.loc[pathway['confidence'] >= 0.8]
 
 def compute_pertinence(pathway):
     p_df = pd.DataFrame(columns=['step', 'start_offset', 'end_offset', 'confidence', 'pertinence'])
@@ -35,3 +36,12 @@ def compute_pertinence(pathway):
             
     p_df.rename(columns={'value': 'entity'}, inplace=True)
     return p_df
+
+def remove_duplicates(pathway):
+    pathway['pivot_column'] = pathway['entity'].str.strip()
+    pathway['pivot_column'] = pathway['pivot_column'].str.lower()
+    pathway = pathway.drop_duplicates(subset=['pivot_column'], keep="first")
+    pathway = pathway.drop(columns = 'pivot_column')
+    pathway = pathway.reset_index(drop = True)
+
+    return pathway

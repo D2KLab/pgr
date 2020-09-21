@@ -6,6 +6,8 @@ import pdb
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 
+from urlextract import URLExtract
+
 from docx import Document
 
 try:
@@ -46,7 +48,7 @@ def do_conversion(file):
         if file_extension == ".pdf":
             text = purge_index(text, file)
 
-        data = purge_urls(text)
+        data = purge_urls(text, file_name)
 
         # remove • unicode and substitute with -
         data = re.sub('\u2022', '-', data)   
@@ -77,18 +79,8 @@ def normalization(text, delimiter='.'):
     Each line is a complete phrase
     '''
     
-    #file_input = open(path, 'r', encoding=encoding)
-
-    #relative_path = os.path.dirname(path)
-
-    
-    #file_name, file_extension = os.path.splitext(os.path.basename(path))
-    
     unparsed_info = text
 
-    #file_output = open(relative_path + '/' + file_name + "_normalized" + file_extension, 'w', encoding=encoding)
-    #file_output = open('log_datas.txt', 'w')
-    #print(unparsed_info)
     bc_text = ' '.join(unparsed_info.split('\n'))
     
     sentenceSplit = bc_text.split(".")
@@ -103,49 +95,34 @@ def normalization(text, delimiter='.'):
     #file_output.write(datas)
     
     return datas
-    #os.remove(relative_path + '/' + file_name + '_purged.txt')
-    #os.remove(relative_path + '/' + file_name + '.txt')
-    #os.rename(relative_path + '/' + file_name + '_normalized.txt', file_name + '.txt')
 
 def Find(string): 
-    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
-    url = re.findall(regex,string)       
-    return [x[0] for x in url]
+    extractor = URLExtract()
+    urls = extractor.find_urls(string)
+    return urls
 
-def purge_urls(text):
-    #file_name, file_extension = os.path.splitext(os.path.basename(path))
-    #relative_path = os.path.dirname(path)
-
-    #file_input = open(path, 'r', encoding=encoding)
-
-    #file_output = open(relative_path + '/' + file_name + '_purged.txt', 'w')
-    #file_index = open(relative_path + '/' + file_name + '_index.txt', 'w')
+def purge_urls(text, file_name):
+    file_index = open(file_name + '_urls.txt', 'w')
 
     unparsed_info = text.replace('-\n', '')
     index_count = 1
 
     urls = Find(unparsed_info)
-    elements = ''
-    for element in unparsed_info.splitlines():
-        urls = Find(element)
-        if len(urls) != 0:
-            for url in urls:
-                element = element.replace(url, str(index_count), 1)
-                elements = elements + element +'\n'
-                #file_index.write(str(index_count) + ' - ' + url + '\n')
-                index_count = index_count + 1
+    
+    if len(urls) != 0:
+        for url in urls:
+            unparsed_info = re.sub(url, '[URL_'+str(index_count)+']', unparsed_info)
+            unparsed_info = unparsed_info + '\n'
+            file_index.write('[URL_'+str(index_count)+']' + ' - ' + url + '\n')
+            index_count = index_count + 1
 
-        char_presence = re.search('[a-zA-Z]', element)
-        chapter_present = re.search(r'^\d{1,}\.', element) 
+        char_presence = re.search('[a-zA-Z]', unparsed_info)
+        chapter_present = re.search(r'^\d{1,}\.', unparsed_info) 
 
         if char_presence and not chapter_present:
-            #file_output.write(element + '\n')
-            elements = elements + element +'\n'
-    #file_output.close()
-    #file_input.close()
-    #file_index.close()
-
-    return normalization(elements)
+            unparsed_info = unparsed_info +'\n'
+    file_index.close()
+    return normalization(unparsed_info)
 
 def purge_index(data, file):
 
