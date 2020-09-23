@@ -11,7 +11,7 @@ __pycache__/
 cache_dir/
 
 tools/panacea_tools/__pycache__/
-tools/wikiner_tools/wikiner_conll/en/
+tools/wikiner_tools/__pycache__/
 
 runs/
 
