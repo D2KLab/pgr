@@ -61,16 +61,13 @@ def do_conversion(file):
             print("%s\n" % (ext))
         sys.exit(2)
 
-def to_list(data, delimiter='.'):
-    #file = open(path, 'r')
-    unparsed_info = data
+def to_list(data):
     element_list = [] # Make an empty list
 
-    for elements in unparsed_info.split(delimiter):
-        e = elements.strip(delimiter)
-        if e != '':
-		    
-            element_list.append(e.replace('\n','')) #Append to list
+    for element in re.split('[.\n]', data):
+        stripped_element = element.strip()
+        if stripped_element != '':	    
+            element_list.append(stripped_element) #Append to list the striped element
     
     return element_list
 
@@ -113,14 +110,11 @@ def purge_urls(text, file_name):
         for url in urls:
             unparsed_info = re.sub(url, '[URL_'+str(index_count)+']', unparsed_info)
             unparsed_info = unparsed_info + '\n'
-            file_index.write('[URL_'+str(index_count)+']' + ' - ' + url + '\n')
+            file_index.write('[URL_'+str(index_count)+']' + '-' + url + '\n')
             index_count = index_count + 1
 
-        char_presence = re.search('[a-zA-Z]', unparsed_info)
-        chapter_present = re.search(r'^\d{1,}\.', unparsed_info) 
+    unparsed_info = re.sub(r'^\d{1,}\.[\s][a-zA-Z]*', '', unparsed_info)
 
-        if char_presence and not chapter_present:
-            unparsed_info = unparsed_info +'\n'
     file_index.close()
     return normalization(unparsed_info)
 

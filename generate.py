@@ -1,4 +1,4 @@
-import generator
+from tools import generator
 import argparse
 import re
 import json

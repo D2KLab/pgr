@@ -1,15 +1,13 @@
-import doc2txt
 import argparse
-from transner import Transner
-import json
+from Transner import Transner
 import os
 
-import pdb
+from tools import doc2txt, annotator
 
 from python_sutime.sutime import SUTime
 
 def annotate_transner(sentence_list):
-    model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=4)
+    model = Transner(pretrained_path='Transner/transner/multilang_uncased', use_cuda=True, cuda_device=2)
     return model.ner(sentence_list, apply_regex=True)
 
 def annotate_sutime(ner_dict):
@@ -25,61 +23,18 @@ def annotate_sutime(ner_dict):
 
     return ner_dict
 
-def export_to_json(ner_dict, path):
-    json_file = json.dumps(ner_dict, indent=4)
-    f = open(path +'_ner.json', 'w')
-    f.write(json_file)
-    f.close()
-
-def aggregate_dict(ner_dict):
-    aggregated_dict = {
-        'text': '', 
-        'entities': []
-    }
-    offset = 0
-
-    for element in ner_dict:
-        for entity in element['entities']:          
-            start_offset = offset + entity['offset']
-            end_offset = offset + entity['offset'] + len(entity['value'])
-            
-            aggregated_dict['entities'].append({
-                    'value': entity['value'],
-                    'confidence': entity['confidence'],
-                    'start_offset': start_offset,
-                    'end_offset': end_offset,
-                    'type': entity['type'] 
-                })
-        
-        offset = offset + len(element['sentence'])
-        aggregated_dict['text'] = aggregated_dict['text'] + element['sentence']
-
-    return aggregated_dict
-
-def export_to_doccano(ner_dict, path):
-
-    doccano_dict = {}
-    doccano_dict['text'] = ner_dict['text']
-    doccano_dict['labels'] = []
-
-    doccano_dict['meta'] = os.path.basename(path)
-
-    for item in ner_dict['entities']:
-        doccano_dict['labels'].append([item['start_offset'], item['end_offset'], item['type']])
-
-    file_out = open(path +'_ner.jsonl', 'w', encoding='utf-8')
-    file_out.write(json.dumps(doccano_dict))
-    file_out.write('\n')
-
 def main(path=None):   
     sentence_list = doc2txt.to_list(open(path, 'r').read())
 
     ner_dict = annotate_transner(sentence_list)
-    ner_dict = annotate_sutime(ner_dict)
-   
-    ner_dict = aggregate_dict(ner_dict)
-    export_to_json(ner_dict, os.path.splitext(path)[0])
-    export_to_doccano(ner_dict, os.path.splitext(path)[0])
+    #ner_dict = annotate_sutime(ner_dict)
+
+    ner_dict = annotator.aggregate_dict(ner_dict)
+
+    #ner_dict = resolve_uri_entities(ner_dict, path)
+
+    annotator.export_to_json(ner_dict, os.path.splitext(path)[0])
+    annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
 
 if __name__ == '__main__':
     """Input example:

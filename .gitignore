@@ -10,12 +10,11 @@ __pycache__/
 
 cache_dir/
 
+tools/__pycache__/
 tools/panacea_tools/__pycache__/
 tools/wikiner_tools/__pycache__/
 
 runs/
-
-transner/multilang_uncased/
 
 nohup.out
 log.txt
