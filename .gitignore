@@ -10,26 +10,12 @@ __pycache__/
 
 cache_dir/
 
-panacea_tools/__pycache__/
-panacea_tools/panacea_conll/
-panacea_tools/panacea_conll_balanced/
-panacea_tools/panacea_original/
-panacea_tools/preprocessing_dataset/__pycache__/
-panacea_tools/preprocessing_dataset/conll_final/
-panacea_tools/preprocessing_dataset/xmls/
-panacea_tools/preprocessing_dataset/xmls_tree/
-panacea_tools/preprocessing_dataset/log.txt
-panacea_tools/preprocessing_dataset/nohup.out
+tools/panacea_tools/__pycache__/
+tools/wikiner_tools/wikiner_conll/en/
 
 runs/
 
 transner/multilang_uncased/
-
-wikiner_tools/wikiner_conll/en/
-wikiner_tools/wikiner_conll/es/
-wikiner_tools/wikiner_conll/es_balanced/
-wikiner_tools/wikiner_conll/it/
-wikiner_tools/wikiner_original/
 
 nohup.out
 log.txt
