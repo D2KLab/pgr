@@ -1,22 +1,47 @@
 import pandas as pd 
 import pdb
 
+steps = ['how', 'where', 'when']
+
 def generate(ner_dict):
     pathway_aggregated = generate_pathway(ner_dict)
     pathway_df = compute_pertinence(pathway_aggregated)
     pathway = filter_pathway(pathway_df)
-    pathway = remove_duplicates(pathway)
-    return pathway
+
+    result_pathway = pd.DataFrame(columns=pathway.columns)
+
+    for step in steps:
+        result_pathway = result_pathway.append(remove_duplicates(pathway.loc[pathway['step'] == step, :]))
+    
+    return result_pathway
 
 def generate_pathway(ner_dict):
     pathway = {'when': [], 'where': [], 'how': []}
 
     try:
         pathway['when'] = pathway['when'] + ner_dict['entities']['TIME']
-        pathway['where'] = pathway['where'] + ner_dict['entities']['LOCATION'] + ner_dict['entities']['ORGANIZATION']
-        pathway['how'] = pathway['how'] + ner_dict['entities']['MISCELLANEOUS'] + ner_dict['entities']['PROCEDURE'] + ner_dict['entities']['DOCUMENT']
     except KeyError as e:
-        print(e)
+        print('Key not found: '+ str(e))
+    try:
+        pathway['where'] = pathway['where'] + ner_dict['entities']['LOCATION']
+    except KeyError as e:
+        print('Key not found: '+ str(e))
+    try:
+        pathway['where'] = pathway['where'] + ner_dict['entities']['ORGANIZATION']
+    except KeyError as e:
+        print('Key not found: '+ str(e))
+    try:
+        pathway['how'] = pathway['how'] + ner_dict['entities']['MISCELLANEOUS'] 
+    except KeyError as e:
+        print('Key not found: '+ str(e))
+    try:
+        pathway['how'] = pathway['how'] + ner_dict['entities']['PROCEDURE']
+    except KeyError as e:
+        print('Key not found: '+ str(e))
+    try:
+        pathway['how'] = pathway['how'] + ner_dict['entities']['DOCUMENT']
+    except KeyError as e:
+        print('Key not found: '+ str(e))
 
     return pathway
 
@@ -38,10 +63,11 @@ def compute_pertinence(pathway):
     return p_df
 
 def remove_duplicates(pathway):
-    pathway['pivot_column'] = pathway['entity'].str.strip()
-    pathway['pivot_column'] = pathway['pivot_column'].str.lower()
-    pathway = pathway.drop_duplicates(subset=['pivot_column'], keep="first")
-    pathway = pathway.drop(columns = 'pivot_column')
-    pathway = pathway.reset_index(drop = True)
+    tmp_pathway = pathway.copy()
+    tmp_pathway['pivot_column'] = tmp_pathway['entity'].str.strip()
+    tmp_pathway['pivot_column'] = tmp_pathway['pivot_column'].str.lower()
+    tmp_pathway = tmp_pathway.drop_duplicates(subset=['pivot_column'], keep="first")
+    tmp_pathway = tmp_pathway.drop(columns = 'pivot_column')
+    tmp_pathway = tmp_pathway.reset_index(drop = True)
 
-    return pathway
+    return tmp_pathway

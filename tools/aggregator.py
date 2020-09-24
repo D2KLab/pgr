@@ -17,20 +17,18 @@ def aggregate_entities(ner_dict):
     aggregated_dict = {
         'text': '',
         'entities': {
-            'PERSON': [],
-            'LOCATION': [],
-            'ORGANIZATION': [],
-            'MISCELLANEOUS': [],
-            'TIME': [],
-            'DOCUMENT': [],
-            'PROCEDURE': []
+
         }
     }
 
     aggregated_dict['text'] = ner_dict['text']
 
     for entity in ner_dict['entities']:
-        entity_type = entity.pop('type')          
-        aggregated_dict['entities'][entity_type].append(entity) 
+        entity_type = entity.pop('type')
+
+        if entity_type in aggregated_dict['entities']:
+            aggregated_dict['entities'][entity_type].append(entity)
+        else: 
+            aggregated_dict['entities'].update({entity_type: [entity]})
                 
     return aggregated_dict
