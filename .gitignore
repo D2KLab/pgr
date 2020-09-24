@@ -19,3 +19,7 @@ runs/
 nohup.out
 log.txt
 balanced_train.out
+
+documentation/
+
+datasets/
