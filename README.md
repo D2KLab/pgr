@@ -237,7 +237,24 @@ docker-compose docker-compose.dev.yml up -d
 ```
 ## Python-sutime
 
+```
+mvn dependency:copy-dependencies -DoutputDirectory=./jars
+mvn dependency:copy-dependencies -DoutputDirectory=./jars -P spanish
+```
+
 In the $sutime.py$ file modify the following line 
+
+```
+sutime_jar = os.path.join(
+  *[imp.find_module("sutime")[1], "jars", SUTime._sutime_python_jar]
+)
+```
+into 
+```
+sutime_jar = os.path.join(
+  *[os.path.abspath('python-sutime/sutime'), "jars", SUTime._sutime_python_jar]
+)
+```
 
 ```
 return json.loads(self._sutime.annotate(input_str))
@@ -247,7 +264,4 @@ into
 ```
 return json.loads(str(self._sutime.annotate(input_str)))
 ```
-```
-mvn dependency:copy-dependencies -DoutputDirectory=./jars
-mvn dependency:copy-dependencies -DoutputDirectory=./jars -P spanish
-```
+
