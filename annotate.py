@@ -1,10 +1,12 @@
 import argparse
 from Transner import Transner
 import os
+import re
 
 from tools import annotator
 
-from python_sutime.sutime import SUTime
+import importlib
+sutime_mod = importlib.import_module("python-sutime.sutime")
 
 def to_list(data):
     element_list = [] # Make an empty list
@@ -23,8 +25,8 @@ def annotate_transner(sentence_list):
 def annotate_sutime(ner_dict):
     for item in ner_dict:
         text = item['sentence']
-        jar_files = os.path.join(os.path.dirname(__file__) + 'python_sutime/', 'jars')
-        sutime = SUTime(jars=jar_files, mark_time_ranges=True)
+        jar_files = os.path.join(os.path.dirname(__file__) + 'python-sutime/', 'jars')
+        sutime = sutime_mod.SUTime(jars=jar_files, mark_time_ranges=True)
 
         json = sutime.parse(text)
         
