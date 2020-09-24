@@ -2,9 +2,19 @@ import argparse
 from Transner import Transner
 import os
 
-from tools import doc2txt, annotator
+from tools import annotator
 
 from python_sutime.sutime import SUTime
+
+def to_list(data):
+    element_list = [] # Make an empty list
+
+    for element in re.split('[.\n]', data):
+        stripped_element = element.strip()
+        if stripped_element != '':	    
+            element_list.append(stripped_element) #Append to list the striped element
+    
+    return element_list
 
 def annotate_transner(sentence_list):
     model = Transner(pretrained_path='Transner/transner/multilang_uncased', use_cuda=True, cuda_device=2)
@@ -24,7 +34,7 @@ def annotate_sutime(ner_dict):
     return ner_dict
 
 def main(path=None):   
-    sentence_list = doc2txt.to_list(open(path, 'r').read())
+    sentence_list = to_list(open(path, 'r').read())
 
     ner_dict = annotate_transner(sentence_list)
     ner_dict = annotate_sutime(ner_dict)

@@ -1,4 +1,4 @@
-from tools import doc2txt
+from doc2txt import doc2txt
 import argparse
 
 def main(files=None):
