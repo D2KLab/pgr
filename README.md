@@ -27,6 +27,10 @@
 
 This repo joins and extends the works present in Transer (https://github.com/D2KLab/Transner) and doc2txt (https://github.com/D2KLab/doc2txt): please see this two repositories in order to get started.
 
+```
+git clone git@github.com:D2KLab/pgr.git --recursive
+```
+
 ### Setup virtual environment
 
 In order to install and use the external libraries used in this repository, we recommend the use of a virtual environment.
@@ -233,6 +237,16 @@ docker-compose docker-compose.dev.yml up -d
 ```
 ## Python-sutime
 
+In the $sutime.py$ file modify the following line 
+
+```
+return json.loads(self._sutime.annotate(input_str))
+```
+into
+
+```
+return json.loads(str(self._sutime.annotate(input_str)))
+```
 ```
 mvn dependency:copy-dependencies -DoutputDirectory=./jars
 mvn dependency:copy-dependencies -DoutputDirectory=./jars -P spanish
