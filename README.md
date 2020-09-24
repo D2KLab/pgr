@@ -231,3 +231,9 @@ docker rm -f $(docker ps -a -q)
 docker volume rm $(docker volume ls -q)
 docker-compose docker-compose.dev.yml up -d
 ```
+## Python-sutime
+
+```
+mvn dependency:copy-dependencies -DoutputDirectory=./jars
+mvn dependency:copy-dependencies -DoutputDirectory=./jars -P spanish
+```
