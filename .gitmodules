@@ -6,4 +6,4 @@
 	url = git@github.com:FraBle/python-sutime.git
 [submodule "doc2txt"]
 	path = doc2txt
-	url = git@github-doc2txt:D2KLab/doc2txt.git
+	url = git@github.com:D2KLab/doc2txt.git
