@@ -20,6 +20,10 @@ nohup.out
 log.txt
 balanced_train.out
 
+<<<<<<< HEAD
 documentation/
 
 datasets/
+=======
+.gitmodules
+>>>>>>> 25ba591153fd74bee366bd14fddd3faf09052402
