@@ -40,10 +40,13 @@ def upload_files():
 def upload(filename):
     return send_from_directory(app.config['UPLOAD_PATH'], filename)
 
-@app.route('/pg', methods=['GET'])
-def pg():
-    
+@app.route('/v0.1/annotate', methods=['POST'])
+def annotate():
     return 'OK'
+
+@app.route('/v0.1/generate', methods=['POST'])
+def generate():
+	return 'OK'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000)
