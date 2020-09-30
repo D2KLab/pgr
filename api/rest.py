@@ -7,6 +7,8 @@ from werkzeug.utils import secure_filename
 import sys
 sys.path.append('../')
 
+import run
+
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024 #10MB
 app.config['UPLOAD_EXTENSIONS'] = ['.docx', '.doc', '.pdf', '.txt']
@@ -82,7 +84,7 @@ def generate():
     ## TODO
     ## mongodb saving
 
-	return 'OK'
+    return 'OK'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000)

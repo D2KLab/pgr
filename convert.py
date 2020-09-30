@@ -1,8 +1,8 @@
 from doc2txt import doc2txt
 import argparse
 
-def main(files=None):
-    file = doc2txt.convert_to_txt(files)
+def main(file=None):
+    file_output = doc2txt.convert_to_txt(file)
 
 if __name__ == '__main__':
     """Input example:
@@ -22,4 +22,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(files=args.file)
+    main(file=args.file)
