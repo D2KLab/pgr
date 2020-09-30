@@ -40,7 +40,7 @@ def upload_files():
 def upload(filename):
     return send_from_directory(app.config['UPLOAD_PATH'], filename)
 
-# curl -i -F data='{"a"="Test1","b"="Test2"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.1/annotate
+# curl -i -F data='{"pilot"="Malaga","service"="Asylum Request"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.1/annotate
 @app.route('/v0.1/annotate', methods=['POST'])
 def annotate():
 
@@ -54,13 +54,34 @@ def annotate():
         uploaded_file.save(os.path.join('/tmp/', filename))
 
 
-    data = request.form
+    data = request.form['data']
     print (data)
+
+    ## TODO
+    ## mongodb saving
 
     return 'OK'
 
+# curl -i -F data='{"pilot"="Malaga","service"="Asylum Request"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.1/generate
 @app.route('/v0.1/generate', methods=['POST'])
 def generate():
+
+    uploaded_file = request.files['file']
+    filename = secure_filename(uploaded_file.filename)
+    if filename != '':
+        file_ext = os.path.splitext(filename)[1]
+        if file_ext not in app.config['UPLOAD_EXTENSIONS'] :
+            return "Invalid file", 400
+
+        uploaded_file.save(os.path.join('/tmp/', filename))
+
+
+    data = request.form['data']
+    print (data)
+
+    ## TODO
+    ## mongodb saving
+
 	return 'OK'
 
 if __name__ == '__main__':
