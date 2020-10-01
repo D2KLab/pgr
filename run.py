@@ -38,6 +38,8 @@ def pathway_to_doccano(json_pathway, path):
         file_out.write(str(json.dumps(element, ensure_ascii=False)))
         file_out.write('\n')
 
+    return file_out
+
 def export_to_json(ner_dict, path):
     json_file = json.dumps(ner_dict, indent=4)
     filename = re.sub('_ner.json', '_cluster.json', path)
@@ -56,7 +58,7 @@ def to_list(data):
     return element_list
 
 def annotate_transner(sentence_list):
-    model = Transner(pretrained_path='Transner/transner/multilang_uncased', use_cuda=True, cuda_device=2)
+    model = Transner(pretrained_path='Transner/transner/multilang_uncased', use_cuda=False, cuda_device=2)
     return model.ner(sentence_list, apply_regex=True)
 
 def annotate_sutime(ner_dict):
@@ -97,6 +99,33 @@ def main(path=None):
     json_pathway = pathway.to_json(orient='records')
 
     pathway_to_doccano(json.loads(json_pathway), path)
+
+def run(path=None, generate_pathway=False):
+
+    # convert.py
+    converted_file = doc2txt.convert_to_txt(path)
+
+    # annotate.py
+    sentence_list = to_list(converted_file)
+
+    ner_dict = annotate_transner(sentence_list)
+    ner_dict = annotate_sutime(ner_dict)
+
+    ner_dict = annotator.aggregate_dict(ner_dict)
+
+    #ner_dict = resolve_uri_entities(ner_dict, path)
+
+    if generate_pathway:
+        # aggregate.py
+        aggregated_ner_dict = aggregator.aggregate_entities(ner_dict)
+
+        # generate.py
+        pathway = generator.generate(aggregated_ner_dict)
+        json_pathway = pathway.to_json(indent=4, orient='records')
+
+        return pathway_to_doccano(json.loads(json_pathway), path)
+    
+    return annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
 
 if __name__ == '__main__':
     """Input example:

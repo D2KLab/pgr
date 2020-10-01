@@ -1,18 +1,23 @@
+# il file di run da importare è nella cartella pgr/, padre di quella corrente 
+import sys
+sys.path.append('../pgr')
+
 import imghdr
 import os
 from flask import Flask, render_template, request, redirect, url_for, abort, \
     send_from_directory
 from werkzeug.utils import secure_filename
 
-import sys
-sys.path.append('../')
+import zipfile
 
 import run
+
+print(os.getcwd())
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024 #10MB
 app.config['UPLOAD_EXTENSIONS'] = ['.docx', '.doc', '.pdf', '.txt']
-app.config['UPLOAD_PATH'] = 'uploads'
+app.config['UPLOAD_PATH'] = 'api/uploads'
 
 @app.errorhandler(413)
 def too_large(e):
@@ -35,7 +40,25 @@ def upload_files():
             return "Invalid file", 400
         uploaded_file.save(os.path.join(app.config['UPLOAD_PATH'], filename))
 
-        usage.main(uploaded_file)
+    
+        result_pathway = run.run(os.path.join(app.config['UPLOAD_PATH'], filename), generate_pathway=True)
+        print(result_pathway)
+        '''
+        Create a zip file and return it to the browser
+
+        zipfolder = zipfile.ZipFile('outputs.zip','w', compression = zipfile.ZIP_DEFLATED)
+        zipfolder.write( os.path.join(app.config['UPLOAD_PATH'], os.path.splitext(filename)[0] + '_ner.jsonl'), arcname=os.path.splitext(filename)[0] + '_ner.jsonl' )
+        zipfolder.write( os.path.join(app.config['UPLOAD_PATH'], os.path.splitext(filename)[0] + '_pathway.jsonl'), arcname=os.path.splitext(filename)[0] + '_pathway.jsonl' )
+        zipfolder.close()
+
+        return send_file(zipfolder,
+            mimetype = 'zip',
+            attachment_filename= 'outputs.zip',
+            as_attachment = True)
+
+        # Delete the zip file if not needed
+        os.remove("outputs.zip")
+        '''
     return '', 204
 
 @app.route('/uploads/<filename>')
