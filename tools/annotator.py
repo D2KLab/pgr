@@ -48,7 +48,7 @@ def export_to_doccano(ner_dict, path):
     file_out.write(json.dumps(doccano_dict))
     file_out.write('\n')
 
-    return file_out
+    return doccano_dict
 
 def replacer(s, newstring, index, length, nofail=False):
     # raise an error if index is outside of the string

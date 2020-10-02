@@ -34,11 +34,17 @@ def pathway_to_doccano(json_pathway, path):
     pathway_jsonl.append(when_dict)
     pathway_jsonl.append(how_dict)
     file_out = open(filename + '_pathway.jsonl', 'w', encoding='utf-8')
+
+    return_string = ''
+
     for element in pathway_jsonl:
-        file_out.write(str(json.dumps(element, ensure_ascii=False)))
+        string_element = str(json.dumps(element, ensure_ascii=False))
+        file_out.write(string_element)
         file_out.write('\n')
 
-    return file_out
+        return_string = return_string + string_element + '\n'
+
+    return return_string
 
 def export_to_json(ner_dict, path):
     json_file = json.dumps(ner_dict, indent=4)
@@ -64,7 +70,7 @@ def annotate_transner(sentence_list):
 def annotate_sutime(ner_dict):
     for item in ner_dict:
         text = item['sentence']
-        jar_files = os.path.join(os.path.dirname(__file__) + 'python-sutime/', 'jars')
+        jar_files = os.path.join('python-sutime/', 'jars')
         sutime = sutime_mod.SUTime(jars=jar_files, mark_time_ranges=True)
 
         json = sutime.parse(text)
@@ -101,27 +107,34 @@ def main(path=None):
     pathway_to_doccano(json.loads(json_pathway), path)
 
 def run(path=None, generate_pathway=False):
+    print('Document successfully received')
 
+    print(path)
     # convert.py
     converted_file = doc2txt.convert_to_txt(path)
+
+    print('Document successfully converted')
 
     # annotate.py
     sentence_list = to_list(converted_file)
 
     ner_dict = annotate_transner(sentence_list)
-    ner_dict = annotate_sutime(ner_dict)
+    #ner_dict = annotate_sutime(ner_dict)
 
     ner_dict = annotator.aggregate_dict(ner_dict)
 
     #ner_dict = resolve_uri_entities(ner_dict, path)
+    print('Document successfully annotated')
 
     if generate_pathway:
         # aggregate.py
         aggregated_ner_dict = aggregator.aggregate_entities(ner_dict)
+        print('Data successfully aggregated')
 
         # generate.py
         pathway = generator.generate(aggregated_ner_dict)
         json_pathway = pathway.to_json(indent=4, orient='records')
+        print('Pathway successfully generated')
 
         return pathway_to_doccano(json.loads(json_pathway), path)
     

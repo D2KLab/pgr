@@ -22,10 +22,10 @@ def generate_pathway(ner_dict):
         pathway['when'] = pathway['when'] + ner_dict['entities']['TIME']
     except KeyError as e:
         print('Key not found: '+ str(e))
-    try:
-        pathway['where'] = pathway['where'] + ner_dict['entities']['LOCATION']
-    except KeyError as e:
-        print('Key not found: '+ str(e))
+    #try:
+    #    pathway['where'] = pathway['where'] + ner_dict['entities']['LOCATION']
+    #except KeyError as e:
+    #    print('Key not found: '+ str(e))
     try:
         pathway['where'] = pathway['where'] + ner_dict['entities']['ORGANIZATION']
     except KeyError as e:
