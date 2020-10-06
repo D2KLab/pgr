@@ -2,6 +2,7 @@ import argparse
 import os 
 import re
 import json
+import pdb
 
 from Transner import Transner
 from doc2txt import doc2txt
@@ -11,12 +12,13 @@ from tools import annotator, aggregator, generator
 import importlib
 sutime_mod = importlib.import_module("python-sutime.sutime")
 
-def pathway_to_doccano(json_pathway, path):
+def pathway_to_doccano(json_pathway, path, pilot, service):
+    metadata = os.path.basename(path) if pilot == '' else pilot + ' - ' + service + ' - ' + os.path.basename(path)
     filename = os.path.splitext(path)[0]
     pathway_jsonl = []
-    where_dict = {"text": "where", "labels": [], "meta": filename}
-    how_dict = {"text": "how", "labels": [], "meta": filename}
-    when_dict = {"text": "when", "labels": [], "meta": filename}
+    where_dict = {"text": "where", "labels": [], "meta": metadata}
+    how_dict = {"text": "how", "labels": [], "meta": metadata}
+    when_dict = {"text": "when", "labels": [], "meta": metadata}
 
     for entity in json_pathway:
         if len(entity["entity"].strip()) > 0:
@@ -106,7 +108,7 @@ def main(path=None):
 
     pathway_to_doccano(json.loads(json_pathway), path)
 
-def run(path=None, generate_pathway=False):
+def run(path=None, generate_pathway=False, pilot='', service=''):
     print('Document successfully received')
 
     print(path)
@@ -136,9 +138,9 @@ def run(path=None, generate_pathway=False):
         json_pathway = pathway.to_json(indent=4, orient='records')
         print('Pathway successfully generated')
 
-        return pathway_to_doccano(json.loads(json_pathway), path)
+        return pathway_to_doccano(json.loads(json_pathway), path, pilot, service)
     
-    return annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
+    return annotator.export_to_doccano(ner_dict, path, pilot, service)
 
 if __name__ == '__main__':
     """Input example:

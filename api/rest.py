@@ -10,6 +10,8 @@ from werkzeug.utils import secure_filename
 
 import zipfile
 
+import json
+
 import run
 
 print(os.getcwd())
@@ -78,14 +80,17 @@ def annotate():
 
         uploaded_file.save(os.path.join('/tmp/', filename))
 
+        data = json.loads(request.form['data'])
+        print(data)
 
-    data = request.form['data']
-    print (data)
+        string_result_ner = run.run(os.path.join('/tmp/', filename), generate_pathway=False, pilot=data['pilot'], service=data['service'])
+
+        return string_result_ner
 
     ## TODO
     ## mongodb saving
 
-    return 'OK'
+    return 'NOK', 400
 
 # curl -i -F data='{"pilot"="Malaga","service"="Asylum Request"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.1/generate
 @app.route('/v0.1/generate', methods=['POST'])
@@ -100,14 +105,16 @@ def generate():
 
         uploaded_file.save(os.path.join('/tmp/', filename))
 
+        data = json.loads(request.form['data'])
 
-    data = request.form['data']
-    print (data)
+        result_pathway = run.run(os.path.join('/tmp/', filename), generate_pathway=True, pilot=data['pilot'], service=data['service'])
+
+        return result_pathway
 
     ## TODO
     ## mongodb saving
 
-    return 'OK'
+    return 'NOK', 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000)

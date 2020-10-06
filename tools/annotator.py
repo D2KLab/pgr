@@ -33,13 +33,15 @@ def aggregate_dict(ner_dict):
 
     return aggregated_dict
 
-def export_to_doccano(ner_dict, path):
+def export_to_doccano(ner_dict, path, pilot='', service=''):
+
+    metadata = os.path.basename(path) if pilot == '' else pilot + ' - ' + service + ' - ' + os.path.basename(path)
 
     doccano_dict = {}
     doccano_dict['text'] = ner_dict['text']
     doccano_dict['labels'] = []
 
-    doccano_dict['meta'] = os.path.basename(path)
+    doccano_dict['meta'] = metadata
 
     for item in ner_dict['entities']:
         doccano_dict['labels'].append([item['start_offset'], item['end_offset'], item['type']])
