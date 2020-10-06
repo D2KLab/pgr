@@ -39,7 +39,7 @@ def main(path=None):
     sentence_list = to_list(open(path, 'r').read())
 
     ner_dict = annotate_transner(sentence_list)
-    ner_dict = annotate_sutime(ner_dict)
+    #ner_dict = annotate_sutime(ner_dict)
 
     ner_dict = annotator.aggregate_dict(ner_dict)
 

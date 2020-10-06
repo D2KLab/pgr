@@ -121,7 +121,7 @@ def run(path=None, generate_pathway=False, pilot='', service=''):
     sentence_list = to_list(converted_file)
 
     ner_dict = annotate_transner(sentence_list)
-    #ner_dict = annotate_sutime(ner_dict)
+    ner_dict = annotate_sutime(ner_dict)
 
     ner_dict = annotator.aggregate_dict(ner_dict)
 
