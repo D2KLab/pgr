@@ -4,3 +4,6 @@
 [submodule "doc2txt"]
 	path = doc2txt
 	url = git@github.com:D2KLab/doc2txt.git
+[submodule "transner"]
+	path = transner
+	url = git@github-transner:D2KLab/transner.git
