@@ -1,3 +1,9 @@
 [submodule "python-sutime"]
 	path = python-sutime
 	url = git@github.com:FraBle/python-sutime.git
+[submodule "transner"]
+	path = transner
+	url = git@github.com:D2KLab/transner.git
+[submodule "doc2txt"]
+	path = doc2txt
+	url = git@github.com:D2KLab/doc2txt.git
