@@ -1,5 +1,5 @@
 import argparse
-from Transner import Transner
+from transner import Transner
 import os
 import re
 
@@ -19,7 +19,7 @@ def to_list(data):
     return element_list
 
 def annotate_transner(sentence_list):
-    model = Transner(pretrained_path='Transner/transner/multilang_uncased', use_cuda=True, cuda_device=2)
+    model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=False, cuda_device=2)
     return model.ner(sentence_list, apply_regex=True)
 
 def annotate_sutime(ner_dict):
@@ -39,7 +39,7 @@ def main(path=None):
     sentence_list = to_list(open(path, 'r').read())
 
     ner_dict = annotate_transner(sentence_list)
-    #ner_dict = annotate_sutime(ner_dict)
+    ner_dict = annotate_sutime(ner_dict)
 
     ner_dict = annotator.aggregate_dict(ner_dict)
 

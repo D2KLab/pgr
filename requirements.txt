@@ -46,3 +46,4 @@ setuptools_scm
 jpype1
 sutime
 urlextract
+wget

@@ -4,7 +4,7 @@ import re
 import json
 import pdb
 
-from Transner import Transner
+#from transner import Transner
 from doc2txt import doc2txt
 
 from tools import annotator, aggregator, generator
@@ -16,9 +16,9 @@ def pathway_to_doccano(json_pathway, path, pilot, service):
     metadata = os.path.basename(path) if pilot == '' else pilot + ' - ' + service + ' - ' + os.path.basename(path)
     filename = os.path.splitext(path)[0]
     pathway_jsonl = []
-    where_dict = {"text": "where", "labels": [], "meta": metadata}
-    how_dict = {"text": "how", "labels": [], "meta": metadata}
-    when_dict = {"text": "when", "labels": [], "meta": metadata}
+    where_dict = {"text": "where", "labels": [], "meta": metadata + ' where'}
+    how_dict = {"text": "how", "labels": [], "meta": metadata + ' how'}
+    when_dict = {"text": "when", "labels": [], "meta": metadata + ' when'}
 
     for entity in json_pathway:
         if len(entity["entity"].strip()) > 0:
@@ -113,7 +113,7 @@ def run(path=None, generate_pathway=False, pilot='', service=''):
 
     print(path)
     # convert.py
-    converted_file = doc2txt.convert_to_txt(path)
+    #converted_file = doc2txt.convert_to_txt(path)
 
     print('Document successfully converted')
 
