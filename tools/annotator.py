@@ -33,7 +33,7 @@ def aggregate_dict(ner_dict):
 
     return aggregated_dict
 
-def export_to_doccano(ner_dict, path, pilot='', service=''):
+def export_to_doccano(ner_dict, path, pilot='', service='', add_confidence=False):
 
     metadata = os.path.basename(path) if pilot == '' else pilot + ' - ' + service + ' - ' + os.path.basename(path)
 
@@ -44,7 +44,10 @@ def export_to_doccano(ner_dict, path, pilot='', service=''):
     doccano_dict['meta'] = metadata
 
     for item in ner_dict['entities']:
-        doccano_dict['labels'].append([item['start_offset'], item['end_offset'], item['type']])
+        if add_confidence:
+            doccano_dict['labels'].append([item['start_offset'], item['end_offset'], item['type'], item['confidence']])
+        else:
+            doccano_dict['labels'].append([item['start_offset'], item['end_offset'], item['type']])
 
     file_out = open(path +'_ner.jsonl', 'w', encoding='utf-8')
     file_out.write(json.dumps(doccano_dict))
