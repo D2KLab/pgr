@@ -1,7 +1,9 @@
 import pdb
 import argparse
 from transner import Transner
-import doc2txt, aggregator, generator
+from doc2txt import doc2txt
+from tools import aggregator
+from tools import generator
 import json
 
 import pandas as pd
@@ -55,25 +57,24 @@ def pathway_to_doccano(json_pathway, filename):
         file_out.write('\n')
 
 def main(strings=None, files=None):
-    model = Transner(pretrained_model='multilang_uncased', use_cuda=True, cuda_device=2)
+    model = Transner(pretrained_model='bert_uncased_base_oblivion_v0.5.1', use_cuda=False)
 
     # conversion
-    file = doc2txt.convert_to_txt(files)
-    text_list = doc2txt.text2str(file)
+    text_list = doc2txt.convert_to_txt(files)
 
     # annotation
     ner_dict = model.ner(text_list, apply_regex=False)
     ner_dict = model.find_from_gazetteers(ner_dict)
     
     # Aggregator
-    aggregated_ner_dict = aggregator.aggregate_ner_dict(ner_dict)  
+    aggregated_ner_dict = aggregator.aggregate_entities(ner_dict)  
 
     # Pathway generation
-    pathway = generator.generate(aggregated_ner_dict)
-    json_pathway = pathway.to_json(orient='records')
+    #pathway = generator.generate(aggregated_ner_dict)
+    #json_pathway = pathway.to_json(orient='records')
 
     text_to_doccano(aggregated_ner_dict, os.path.splitext(files)[0])
-    pathway_to_doccano(json.loads(json_pathway), os.path.splitext(files)[0])
+    #pathway_to_doccano(json.loads(json_pathway), os.path.splitext(files)[0])
 
 if __name__ == '__main__':
     """Input example:
