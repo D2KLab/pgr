@@ -4,7 +4,7 @@ import re
 import json
 import pdb
 
-#from transner import Transner
+from transner import Transner
 from doc2txt import doc2txt
 
 from tools import annotator, aggregator, generator
@@ -12,7 +12,7 @@ from tools import annotator, aggregator, generator
 import importlib
 sutime_mod = importlib.import_module("python-sutime.sutime")
 
-def pathway_to_doccano(json_pathway, path, pilot, service):
+def pathway_to_doccano(json_pathway, path, pilot='', service=''):
     metadata = os.path.basename(path) if pilot == '' else pilot + ' - ' + service + ' - ' + os.path.basename(path)
     filename = os.path.splitext(path)[0]
     pathway_jsonl = []
@@ -66,8 +66,10 @@ def to_list(data):
     return element_list
 
 def annotate_transner(sentence_list):
-    model = Transner(pretrained_path='Transner/transner/multilang_uncased', use_cuda=False, cuda_device=2)
-    return model.ner(sentence_list, apply_regex=True)
+    model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=False, cuda_device=2, language_detection=True)
+    ner_dict = model.ner(sentence_list, apply_regex=True)
+    ner_dict = model.find_dates(ner_dict)
+    return ner_dict
 
 def annotate_sutime(ner_dict):
     for item in ner_dict:
@@ -91,7 +93,7 @@ def main(path=None):
     sentence_list = to_list(converted_file)
 
     ner_dict = annotate_transner(sentence_list)
-    ner_dict = annotate_sutime(ner_dict)
+    #ner_dict = annotate_sutime(ner_dict)
 
     ner_dict = annotator.aggregate_dict(ner_dict)
 
@@ -113,7 +115,7 @@ def run(path=None, generate_pathway=False, pilot='', service=''):
 
     print(path)
     # convert.py
-    #converted_file = doc2txt.convert_to_txt(path)
+    converted_file = doc2txt.convert_to_txt(path)
 
     print('Document successfully converted')
 
@@ -121,7 +123,7 @@ def run(path=None, generate_pathway=False, pilot='', service=''):
     sentence_list = to_list(converted_file)
 
     ner_dict = annotate_transner(sentence_list)
-    ner_dict = annotate_sutime(ner_dict)
+    #ner_dict = annotate_sutime(ner_dict)
 
     ner_dict = annotator.aggregate_dict(ner_dict)
 

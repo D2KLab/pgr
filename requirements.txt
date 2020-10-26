@@ -47,3 +47,5 @@ jpype1
 sutime
 urlextract
 wget
+dateparser
+fasttext
