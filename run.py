@@ -84,31 +84,42 @@ def annotate_sutime(ner_dict):
 
     return ner_dict
 
-def main(path=None):
+def main(path=None, empty=False, convert=True):
 
     # convert.py
-    converted_file = doc2txt.convert_to_txt(path)
+    if convert:
+        converted_file = doc2txt.convert_to_txt(path)
+    else:
+        converted_file = open(path, 'r').read()
 
     # annotate.py
     sentence_list = to_list(converted_file)
 
-    ner_dict = annotate_transner(sentence_list)
-    #ner_dict = annotate_sutime(ner_dict)
+    if empty:
+        ner_dict = {'text': '', 'entities': []}
+        for sentence in sentence_list:
+            ner_dict['text'] = ner_dict['text'] + sentence +'.\n'
 
-    ner_dict = annotator.aggregate_dict(ner_dict)
+        annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
 
-    #ner_dict = resolve_uri_entities(ner_dict, path)
+    else:
+        ner_dict = annotate_transner(sentence_list)
+        #ner_dict = annotate_sutime(ner_dict)
 
-    annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
+        ner_dict = annotator.aggregate_dict(ner_dict)
 
-    # aggregate.py
-    aggregated_ner_dict = aggregator.aggregate_entities(ner_dict)
+        #ner_dict = resolve_uri_entities(ner_dict, path)
 
-    # generate.py
-    pathway = generator.generate(aggregated_ner_dict)
-    json_pathway = pathway.to_json(orient='records')
+        annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
 
-    pathway_to_doccano(json.loads(json_pathway), path)
+        # aggregate.py
+        aggregated_ner_dict = aggregator.aggregate_entities(ner_dict)
+
+        # generate.py
+        pathway = generator.generate(aggregated_ner_dict)
+        json_pathway = pathway.to_json(orient='records')
+
+        pathway_to_doccano(json.loads(json_pathway), path)
 
 def run(path=None, generate_pathway=False, pilot='', service=''):
     print('Document successfully received')
@@ -163,14 +174,20 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '-e',
-        '--encoding',
-        help='Specify encoding. Default is UTF-8.',
+        '--empty',
+        help='Specify if the jsonl output for doccano needs to be empty. Default is false.',
+        required=False
+    )
+    parser.add_argument(
+        '-c',
+        '--convert',
+        help='Specify if you need the file conversion. Default is true.',
         required=False
     )
     args = parser.parse_args()
 
 
-    main(path=args.path)
+    main(path=args.path, empty=args.empty, convert=args.convert)
 
     
     
