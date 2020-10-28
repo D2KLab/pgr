@@ -1,25 +1,40 @@
+### IMPORT
 # il file di run da importare è nella cartella pgr/, padre di quella corrente 
 import sys
 sys.path.append('../pgr')
-
 import imghdr
 import os
 from flask import Flask, render_template, request, redirect, url_for, abort, \
     send_from_directory
 from werkzeug.utils import secure_filename
-
 import zipfile
-
 import json
+from pgr import PathwayGenerator
+from logger import CustomLogger
+import logging
+from logstash_formatter import LogstashFormatterV1
+from flask_cors import CORS
 
-import run
-
-print(os.getcwd())
-
+### CONFIGURATION
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024 #10MB
 app.config['UPLOAD_EXTENSIONS'] = ['.docx', '.doc', '.pdf', '.txt']
 app.config['UPLOAD_PATH'] = 'api/uploads'
+
+cors    = CORS(app)
+os.makedirs('log/', exist_ok=True)
+flasklog    = open('log/flask.log', 'a+')
+handler     = logging.StreamHandler(stream=flasklog)
+handler.setFormatter(LogstashFormatterV1())
+logging.basicConfig(handlers=[handler], level=logging.INFO)
+
+from doccano_api_client import DoccanoClient
+from config import doccano_client_params
+doccano_client = DoccanoClient(
+   doccano_client_params['endpoint'],
+   doccano_client_params['username'],
+   doccano_client_params['password'] 
+)
 
 @app.errorhandler(413)
 def too_large(e):
@@ -45,30 +60,74 @@ def upload_files():
     
         result_pathway = run.run(os.path.join(app.config['UPLOAD_PATH'], filename), generate_pathway=True)
         print(result_pathway)
-        '''
-        Create a zip file and return it to the browser
 
-        zipfolder = zipfile.ZipFile('outputs.zip','w', compression = zipfile.ZIP_DEFLATED)
-        zipfolder.write( os.path.join(app.config['UPLOAD_PATH'], os.path.splitext(filename)[0] + '_ner.jsonl'), arcname=os.path.splitext(filename)[0] + '_ner.jsonl' )
-        zipfolder.write( os.path.join(app.config['UPLOAD_PATH'], os.path.splitext(filename)[0] + '_pathway.jsonl'), arcname=os.path.splitext(filename)[0] + '_pathway.jsonl' )
-        zipfolder.close()
-
-        return send_file(zipfolder,
-            mimetype = 'zip',
-            attachment_filename= 'outputs.zip',
-            as_attachment = True)
-
-        # Delete the zip file if not needed
-        os.remove("outputs.zip")
-        '''
     return '', 204
 
 @app.route('/uploads/<filename>')
 def upload(filename):
     return send_from_directory(app.config['UPLOAD_PATH'], filename)
 
+def get_project_by_name(name):
+    project_list = doccano_client.get_project_list()
+
+    try:
+        project = [prj for prj in project_list if prj['name'] == name][0]
+    except IndexError as e:
+        raise(Exception('The project {} does not exists!'.format(name)))
+
+    return project
+
+def get_document(metadata, project_id):
+    document_list = doccano_client.get_document_list(project_id=project_id)
+
+    document = []
+
+    for doc in document_list['results']:
+        if doc['meta'].startswith("'") and doc['meta'].endswith("'"):
+            meta = doc['meta'].replace('"', '')
+        if doc['meta'].startswith('"') and doc['meta'].endswith('"'):
+            meta = doc['meta'].replace('"', '')
+        if meta == metadata:
+            document.append(doc)
+
+    if len(document) > 0:
+        #print()
+        app.config['logger'].log({'message': 'The document {} already exists.'.format(metadata.split('-')[-1].strip())})
+        return document[0]
+    
+    return False
+
+def refactor_export_annotations(document_dict, project_id):
+    doccano_dict = {}
+    doccano_dict['text'] = document_dict['text']
+    doccano_dict['labels'] = []
+    doccano_dict['meta'] = document_dict['meta']
+
+    for item in document_dict['annotations']:
+        label_type = doccano_client.get_label_detail(project_id=project_id, label_id=item['label'])['text']
+        doccano_dict['labels'].append([item['start_offset'], item['end_offset'], label_type])
+
+    return doccano_dict
+
+def refactor_export_generations(document_list):
+    pathway_jsonl = []
+    for document in document_list:
+        tmp_dict = {'text': document['text'], 'labels': [], 'meta': document['meta']}
+        for annotation in document['annotations']:
+            tmp_dict['labels'].append(annotation['text'])
+
+        pathway_jsonl.append(tmp_dict)
+
+    return_string = ''
+    for element in pathway_jsonl:
+        string_element = str(json.dumps(element, ensure_ascii=False))
+
+        return_string = return_string + string_element + '\n'
+
+    return return_string
+
 # curl -i -F data='{"pilot"="Malaga","service"="Asylum Request"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.1/annotate
-@app.route('/v0.1/annotate', methods=['POST'])
+@app.route('/v0.2/annotate', methods=['POST'])
 def annotate():
 
     uploaded_file = request.files['file']
@@ -80,20 +139,43 @@ def annotate():
 
         uploaded_file.save(os.path.join('/tmp/', filename))
 
+        app.config['logger'].log({'file': 'test'})
+
         data = json.loads(request.form['data'])
-        print(data)
 
-        string_result_ner = run.run(os.path.join('/tmp/', filename), generate_pathway=False, pilot=data['pilot'], service=data['service'])
+        # Instantiate PathwayGeneration object
+        pgr = PathwayGenerator(path=os.path.join('/tmp/', filename), pilot=data['pilot'], service=data['service'], use_cuda=False)
 
-        return string_result_ner
+        # Check for annotation project
+        project = get_project_by_name('easyRights Annotated Documents')
+        #app.config['logger'].log()
 
-    ## TODO
-    ## mongodb saving
+        # Check if document already exists: if so, return annotations. Otherwise, create a new one
+        document = get_document(pgr.annotation_metadata, project['id'])
+        if document:
+            return refactor_export_annotations(document, project['id'])
+
+        converted_file = pgr.do_convert()
+        #app.config['logger'].log()
+
+        ner_dict = pgr.do_annotate()
+        #app.config['logger'].log()
+
+        doccano_dict, ner_path = pgr.export_annotation_to_doccano()
+        #app.config['logger'].log()
+
+        # WARNING: current issue of file upload/download Response -> https://github.com/doccano/doccano-client/issues/13
+        try:
+            doccano_client.post_doc_upload(project_id=project['id'], file_format='json', file_name=ner_path)
+        except json.decoder.JSONDecodeError:
+            pass
+
+        return doccano_dict
 
     return 'NOK', 400
 
 # curl -i -F data='{"pilot"="Malaga","service"="Asylum Request"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.1/generate
-@app.route('/v0.1/generate', methods=['POST'])
+@app.route('/v0.2/generate', methods=['POST'])
 def generate():
 
     uploaded_file = request.files['file']
@@ -107,14 +189,53 @@ def generate():
 
         data = json.loads(request.form['data'])
 
-        result_pathway = run.run(os.path.join('/tmp/', filename), generate_pathway=True, pilot=data['pilot'], service=data['service'])
+        # Instantiate PathwayGeneration object
+        pgr = PathwayGenerator(path=os.path.join('/tmp/', filename), pilot=data['pilot'], service=data['service'], use_cuda=False)
 
-        return result_pathway
+        # Check for projects
+        generation_project = get_project_by_name('easyRights Pathway')
+        annotation_project = get_project_by_name('easyRights Annotated Documents')
+        #app.config['logger'].log()
 
-    ## TODO
-    ## mongodb saving
+        # Check if document already exists: if so, return annotations. Otherwise, create a new one
+        document_annotation = get_document(pgr.annotation_metadata, annotation_project['id'])
+        document_generation = get_document(pgr.generation_metadata['where'], generation_project['id'])
+        if document_generation:
+            document_where = get_document(pgr.generation_metadata['where'], generation_project['id']) 
+            document_when = get_document(pgr.generation_metadata['when'], generation_project['id'])
+            document_how = get_document(pgr.generation_metadata['how'], generation_project['id'])
+            
+            return refactor_export_generations([document_where, document_when, document_how])
+
+        converted_file = pgr.do_convert()
+        #app.config['logger'].log()
+
+        ner_dict = pgr.do_annotate()
+        #app.config['logger'].log()
+
+        if not document_annotation:
+            doccano_dict, ner_path = pgr.export_annotation_to_doccano()
+            #app.config['logger'].log()
+
+            try:
+                doccano_client.post_doc_upload(project_id=annotation_project['id'], file_format='json', file_name=ner_path)
+            except json.decoder.JSONDecodeError:
+                pass
+
+        pathway = pgr.do_generate()
+        #app.config['logger'].log()
+
+        pathway_dict, pathway_path = pgr.export_generation_to_doccano()
+
+        try:
+            doccano_client.post_doc_upload(project_id=generation_project['id'], file_format='json', file_name=pathway_path)
+        except json.decoder.JSONDecodeError:
+            pass
+
+        return pathway_dict
 
     return 'NOK', 400
 
 if __name__ == '__main__':
+    app.config['logger'] = CustomLogger('log/pgr.log')
     app.run(host='0.0.0.0', debug=True, port=5000)

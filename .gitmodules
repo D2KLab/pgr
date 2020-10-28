@@ -7,3 +7,6 @@
 [submodule "doc2txt"]
 	path = doc2txt
 	url = git@github.com:D2KLab/doc2txt.git
+[submodule "doccano_api_client"]
+	path = doccano_api_client
+	url = https://github.com/doccano/doccano_api_client.git

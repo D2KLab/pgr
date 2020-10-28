@@ -49,3 +49,4 @@ urlextract
 wget
 dateparser
 fasttext
+logstash-formatter

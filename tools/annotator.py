@@ -53,7 +53,7 @@ def export_to_doccano(ner_dict, path, pilot='', service='', add_confidence=False
     file_out.write(json.dumps(doccano_dict))
     file_out.write('\n')
 
-    return doccano_dict
+    return doccano_dict, path +'_ner.jsonl'
 
 def replacer(s, newstring, index, length, nofail=False):
     # raise an error if index is outside of the string
