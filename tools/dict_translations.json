@@ -1,0 +1,46 @@
+{
+	"it" : {
+		"where" : "dove",
+		"when": "dove",
+		"how": "cosa",
+		"physical_office" : "ufficio",
+		"web_page": "sito web",
+		"deadline" : "scadenza",
+		"response_time": "tempo della risposta",
+		"procedure": "procedura",
+		"document": "documento"
+	},
+	"en": {
+		"where" : "where",
+		"when": "when",
+		"how" : "how",
+		"physical_office" : "physical office",
+		"web_page": "web site",
+		"deadline" : "deadline",
+		"response_time": "response time",
+		"procedure": "procedure",
+		"document": "document"
+	},
+	"es": {
+		"where": "donde",
+		"when": "cuando",
+		"how": "cómo",
+        "physical_office" : "oficina fisica",
+		"web_page": "sitio web",
+		"deadline" : "fecha límite",
+		"response_time": "tiempo de respuesta",
+		"procedure": "procedimiento",
+		"document": "documento"
+	},
+	"el": {
+        "where": "όπου",
+        "when":"πότε",
+        "how":"πως",
+        "physical_office" : "φυσικό γραφείο",
+        "web_page": "ιστοσελίδα",
+        "deadline" : "προθεσμία",
+        "response_time": "χρόνος απόκρισης",
+        "procedure": "διαδικασία",
+        "document": "έγγραφο"
+    }
+}

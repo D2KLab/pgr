@@ -9,13 +9,6 @@ from doc2txt import doc2txt
 
 from tools import annotator, aggregator, generator
 
-from doccano_api_client import DoccanoClient
-doccano_client = DoccanoClient(
-    'https://doccano.linksfoundation.com',
-    'er-links',
-    'easy27l#'
-)
-
 import importlib
 sutime_mod = importlib.import_module("python-sutime.sutime")
 
@@ -320,8 +313,24 @@ class PathwayGenerator():
 
         pathway_tmp = generator.generate(aggregated_ner_dict)
         json_pathway = pathway_tmp.to_json(indent=4, orient='records')
-        self.pathway = json.loads(json_pathway)
+        mapped_entities = json.loads(json_pathway)
 
+        dict_pathway = json.loads("tools/dict_pathway.json")
+
+        language = aggregated_ner_dict['language']
+
+        self.pathway = {}
+
+        #{'physical_office': [{'start', 'end'}...]}
+
+        for key, sub_types in dict_pathway.items():
+            self.pathway[key] = {}
+            for sub_type in sub_types:
+                self.pathway[key][sub_type] = mapped_entities[sub_type]
+        
+        # {'dove': [], 'come': [], 'quando': []}
+
+        #todo: remove return because we can read the value in the pgr object
         return self.pathway
 
     def export_annotation_to_doccano(self, add_confidence=False):
@@ -344,8 +353,28 @@ class PathwayGenerator():
         return doccano_dict, self.path +'_ner.jsonl'
 
     def export_generation_to_doccano(self):
+        dict_translations = json.loads("tools/dict_translations.json")
+
         filename = os.path.splitext(self.path)[0]
         pathway_jsonl = []
+
+        for key in self.pathway:
+            tmp_dict = {"text": '', "labels": [], "meta": ''}
+            tmp_dict["text"] = dict_translations[self.language][key]
+            tmp_dict["meta"] = self.generation_metadata[key]
+
+            for sub_type, entities in self.pathway[key].items():
+                label = dict_translations[self.language][sub_type] + ': '
+                for entity in entities:
+                    label = label + entity['entity'].strip() + ' ,'
+
+                tmp_dict['labels'].append(label[:-1].strip())
+            
+            pathway_jsonl.append(tmp_dict)
+
+
+        '''
+
         where_dict = {"text": "where", "labels": [], "meta": self.generation_metadata['where']}
         how_dict = {"text": "how", "labels": [], "meta": self.generation_metadata['how']}
         when_dict = {"text": "when", "labels": [], "meta": self.generation_metadata['when']}
@@ -365,6 +394,7 @@ class PathwayGenerator():
         pathway_jsonl.append(where_dict)
         pathway_jsonl.append(when_dict)
         pathway_jsonl.append(how_dict)
+        '''
         file_out = open(filename + '_pathway.jsonl', 'w', encoding='utf-8')
 
         return_string = ''

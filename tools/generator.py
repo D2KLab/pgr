@@ -1,7 +1,9 @@
 import pandas as pd 
 import pdb
+import json
 
-steps = ['how', 'where', 'when']
+dict_types = json.loads("tools/dict_types.json")
+steps = list(dict_types.keys())
 
 def generate(ner_dict):
     pathway_aggregated = generate_pathway(ner_dict)
@@ -16,34 +18,51 @@ def generate(ner_dict):
     return result_pathway
 
 def generate_pathway(ner_dict):
-    pathway = {'when': [], 'where': [], 'how': []}
+    #pathway = {'when': [], 'where': [], 'how': []}
 
+    #dict_types = json.loads("tools/dict_types.json")
+
+    info_subtypes = {}
+    for dtype in dict_types:
+        info_subtypes[dtype] = []
+
+    '''
     try:
-        pathway['when'] = pathway['when'] + ner_dict['entities']['TIME']
+        info_subtypes['when'] = info_subtypes['when'] + ner_dict['entities']['TIME']
     except KeyError as e:
         print('Key not found: '+ str(e))
     #try:
-    #    pathway['where'] = pathway['where'] + ner_dict['entities']['LOCATION']
+    #    info_subtypes['where'] = info_subtypes['where'] + ner_dict['entities']['LOCATION']
     #except KeyError as e:
     #    print('Key not found: '+ str(e))
     try:
-        pathway['where'] = pathway['where'] + ner_dict['entities']['ORGANIZATION']
+        info_subtypes['where'] = info_subtypes['where'] + ner_dict['entities']['ORGANIZATION']
     except KeyError as e:
         print('Key not found: '+ str(e))
     try:
-        pathway['how'] = pathway['how'] + ner_dict['entities']['MISCELLANEOUS'] 
+        info_subtypes['how'] = info_subtypes['how'] + ner_dict['entities']['MISCELLANEOUS'] 
     except KeyError as e:
         print('Key not found: '+ str(e))
     try:
-        pathway['how'] = pathway['how'] + ner_dict['entities']['PROCEDURE']
+        info_subtypes['how'] = info_subtypes['how'] + ner_dict['entities']['PROCEDURE']
     except KeyError as e:
         print('Key not found: '+ str(e))
     try:
-        pathway['how'] = pathway['how'] + ner_dict['entities']['DOCUMENT']
+        info_subtypes['how'] = info_subtypes['how'] + ner_dict['entities']['DOCUMENT']
     except KeyError as e:
-        print('Key not found: '+ str(e))
+        print('Key not found: '+ str(e))'''
 
-    return pathway
+    for key, sub_types in dict_types.items():
+        for sub_type in sub_types:
+            try:
+                info_subtypes[key] = info_subtypes[key] + ner_dict['entities'][sub_type]
+            except KeyError as e:
+                print('Key not found: '+ str(e))
+
+    print(info_subtypes)
+    input()
+
+    return info_subtypes
 
 def filter_pathway(pathway):    
     #return pathway.loc[(pathway['confidence'] >= 0) and (pathway['pertinence'] >= 0)]

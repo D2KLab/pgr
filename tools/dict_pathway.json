@@ -1,0 +1,5 @@
+{
+    "where" : ["physical_office", "web_page"],
+    "when": ["deadline", "response_time"],
+    "how": ["procedure", "document"]
+} 
