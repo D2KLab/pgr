@@ -1,5 +1,6 @@
 import json
 import os 
+import re
 
 def export_to_json(ner_dict, path):
     json_file = json.dumps(ner_dict, indent=4)
@@ -72,8 +73,6 @@ def replacer(s, newstring, index, length, nofail=False):
 def update_offsets(ner_dict, index, offset):
 
     for entity in ner_dict["entities"][index+1:]:
-        #print("modificando entità")
-        #print(entity)
         entity['start_offset'] = entity['start_offset'] + offset
         entity['end_offset'] = entity['end_offset'] + offset
         #print("aggiunto offset di %d" % (offset))
@@ -82,39 +81,26 @@ def update_offsets(ner_dict, index, offset):
     return ner_dict
 
 def resolve_uri_entities(ner_dict, path):
-    uri_file = open(os.path.splitext(path)[0] + "_urls.txt", 'r')
-    uri_lines = uri_file.readlines()
-    uri = {}
-    for uri_line in uri_lines:
-        sym, url = uri_line.split('-')
-        uri[sym] = url.rstrip()
-
-    uri_file.close()  
+    uri_file = open(os.path.splitext(path)[0] + "_urls.json", 'r')
+    uri = json.load(uri_file)
 
     try:
         for entity in ner_dict["entities"]:
             if entity["type"] == "URI":
-                nearby_entity_before = [d for d in ner_dict["entities"] if d['end_offset'] == entity['start_offset'] - 1]
-                nearby_entity_after = [d for d in ner_dict["entities"] if d['start_offset'] == entity['end_offset'] + 1]
-                if nearby_entity_before or nearby_entity_after:
-                    span = len(entity["value"])
-                    url = uri[entity["value"]]
-                    #print("vecchio valore: %s di lunghezza %d" % (entity['value'], span))
-                    #print("vecchio startoffset: %d vecchio endoffset %d" % (entity['start_offset'], entity['end_offset']))
-                    entity["value"] = url
-                    entity['end_offset'] = entity['start_offset'] + len(url)
-                    #print("nuovo valore: %s di lunghezza %d" % (entity['value'], len(entity["value"])))
-                    #print("nuovo startoffset: %d nuovo endoffset %d" % (entity['start_offset'], entity['end_offset']))
-                    #print("differenza offset = %d " % (len(url)-span))
+                span = len(entity["value"])
+                url = uri[entity["value"]]
 
+                #####
+                # FIX HERE 
 
-                    #TODO: al posto di modificare l'entità corrente, appendere l'url al testo dell'entità legata e aggiornare offset
+                ####
+                #ner_dict["text"] = replacer(ner_dict["text"], url, entity['start_offset'], span)
+                ner_dict["text"] = re.sub(entity['value'], url, ner_dict['text'], 1)
 
-                    
-                    ner_dict["text"] = replacer(ner_dict["text"], url, entity['start_offset'], span)
-                    ner_dict = update_offsets(ner_dict, ner_dict['entities'].index(entity), len(url)-span)
-                    
-                    entity["type"] = nearby_entity_before[0]["type"] if nearby_entity_before else nearby_entity_after[0]["type"]
+                entity["value"] = url
+                entity['end_offset'] = entity['start_offset'] + len(url)
+
+                ner_dict = update_offsets(ner_dict, ner_dict['entities'].index(entity), len(url)-span)
     except KeyError as e:
         print(e)
 

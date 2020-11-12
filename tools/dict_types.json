@@ -1,8 +1,8 @@
 {
     "physical_office":["ORGANIZATION", "LOCATION"],
     "web_page":["URI"],
-    "deadline" : ["TIME1"],
-    "response_time" : ["TIME2"],
-    "procedure" : ["MISC", "PROCEDURE"],
-    "document" : ["MISC", "DOCUMENT"]
+    "deadline" : ["TIME"],
+    "response_time" : ["TIME"],
+    "procedure" : ["MISCELLANEOUS", "PROCEDURE"],
+    "document" : ["MISCELLANEOUS", "DOCUMENT"]
 }

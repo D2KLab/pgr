@@ -29,7 +29,7 @@ handler.setFormatter(LogstashFormatterV1())
 logging.basicConfig(handlers=[handler], level=logging.INFO)
 
 from doccano_api_client import DoccanoClient
-from config import doccano_client_params
+from config import doccano_client_params, pilots_legend
 doccano_client = DoccanoClient(
    doccano_client_params['endpoint'],
    doccano_client_params['username'],
@@ -72,7 +72,7 @@ def get_project_by_name(name):
 
     try:
         project = [prj for prj in project_list if prj['name'] == name][0]
-    except IndexError as e:
+    except Exception as e:
         raise(Exception('The project {} does not exists!'.format(name)))
 
     return project
@@ -91,7 +91,6 @@ def get_document(metadata, project_id):
             document.append(doc)
 
     if len(document) > 0:
-        #print()
         app.config['logger'].log({'message': 'The document {} already exists.'.format(metadata.split('-')[-1].strip())})
         return document[0]
     
@@ -137,17 +136,18 @@ def annotate():
         if file_ext not in app.config['UPLOAD_EXTENSIONS'] :
             return "Invalid file", 400
 
-        uploaded_file.save(os.path.join('/tmp/', filename))
-
         app.config['logger'].log({'file': 'test'})
 
         data = json.loads(request.form['data'])
 
+        file_path = os.path.join('documentation/' + data['pilot'] + '/', filename)
+        uploaded_file.save(file_path)
+
         # Instantiate PathwayGeneration object
-        pgr = PathwayGenerator(path=os.path.join('/tmp/', filename), pilot=data['pilot'], service=data['service'], use_cuda=False)
+        pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False)
 
         # Check for annotation project
-        project = get_project_by_name('easyRights Annotated Documents')
+        project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Annotated Documents')
         #app.config['logger'].log()
 
         # Check if document already exists: if so, return annotations. Otherwise, create a new one
@@ -185,16 +185,17 @@ def generate():
         if file_ext not in app.config['UPLOAD_EXTENSIONS'] :
             return "Invalid file", 400
 
-        uploaded_file.save(os.path.join('/tmp/', filename))
-
         data = json.loads(request.form['data'])
 
+        file_path = os.path.join('documentation/' + data['pilot'] + '/', filename)
+        uploaded_file.save(file_path)
+
         # Instantiate PathwayGeneration object
-        pgr = PathwayGenerator(path=os.path.join('/tmp/', filename), pilot=data['pilot'], service=data['service'], use_cuda=False)
+        pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False)
 
         # Check for projects
-        generation_project = get_project_by_name('easyRights Pathway')
-        annotation_project = get_project_by_name('easyRights Annotated Documents')
+        generation_project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Pathways')
+        annotation_project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Annotated Documents')
         #app.config['logger'].log()
 
         # Check if document already exists: if so, return annotations. Otherwise, create a new one
@@ -226,8 +227,10 @@ def generate():
         #app.config['logger'].log()
 
         pathway_dict, pathway_path = pgr.export_generation_to_doccano()
+        print(pathway_path)
 
         try:
+            print('trying to upload documents')
             doccano_client.post_doc_upload(project_id=generation_project['id'], file_format='json', file_name=pathway_path)
         except json.decoder.JSONDecodeError:
             pass

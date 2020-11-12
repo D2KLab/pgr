@@ -2,7 +2,7 @@ import pandas as pd
 import pdb
 import json
 
-dict_types = json.loads("tools/dict_types.json")
+dict_types = json.load(open("tools/dict_types.json", 'r'))
 steps = list(dict_types.keys())
 
 def generate(ner_dict):
@@ -18,39 +18,9 @@ def generate(ner_dict):
     return result_pathway
 
 def generate_pathway(ner_dict):
-    #pathway = {'when': [], 'where': [], 'how': []}
-
-    #dict_types = json.loads("tools/dict_types.json")
-
     info_subtypes = {}
     for dtype in dict_types:
         info_subtypes[dtype] = []
-
-    '''
-    try:
-        info_subtypes['when'] = info_subtypes['when'] + ner_dict['entities']['TIME']
-    except KeyError as e:
-        print('Key not found: '+ str(e))
-    #try:
-    #    info_subtypes['where'] = info_subtypes['where'] + ner_dict['entities']['LOCATION']
-    #except KeyError as e:
-    #    print('Key not found: '+ str(e))
-    try:
-        info_subtypes['where'] = info_subtypes['where'] + ner_dict['entities']['ORGANIZATION']
-    except KeyError as e:
-        print('Key not found: '+ str(e))
-    try:
-        info_subtypes['how'] = info_subtypes['how'] + ner_dict['entities']['MISCELLANEOUS'] 
-    except KeyError as e:
-        print('Key not found: '+ str(e))
-    try:
-        info_subtypes['how'] = info_subtypes['how'] + ner_dict['entities']['PROCEDURE']
-    except KeyError as e:
-        print('Key not found: '+ str(e))
-    try:
-        info_subtypes['how'] = info_subtypes['how'] + ner_dict['entities']['DOCUMENT']
-    except KeyError as e:
-        print('Key not found: '+ str(e))'''
 
     for key, sub_types in dict_types.items():
         for sub_type in sub_types:
@@ -58,9 +28,6 @@ def generate_pathway(ner_dict):
                 info_subtypes[key] = info_subtypes[key] + ner_dict['entities'][sub_type]
             except KeyError as e:
                 print('Key not found: '+ str(e))
-
-    print(info_subtypes)
-    input()
 
     return info_subtypes
 

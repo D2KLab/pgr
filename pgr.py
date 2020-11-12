@@ -271,11 +271,19 @@ class PathwayGenerator():
 
         assert path is not None, "A file path is required"
 
+        languages = {
+            'Larissa': 'el',
+            'Birmingham': 'en',
+            'Malaga': 'en',
+            'Palermo': 'it'
+        }
+
         self.path = path
         self.use_cuda = use_cuda
         self.cuda_device = cuda_device
+        self.language = languages[pilot]
         # TODO: language detection param?
-        self.model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True)
+        self.model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.8)
 
         self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(path)
         self.generation_metadata = {
@@ -302,9 +310,18 @@ class PathwayGenerator():
         sentence_list = self.to_list()
 
         self.ner_dict = self.model.ner(sentence_list, apply_regex=True)
-        self.ner_dict = self.model.find_dates(self.ner_dict)
+        if self.language in ['es', 'en']:
+            self.ner_dict = self.annotate_sutime(self.ner_dict)
+        else:
+            self.ner_dict = self.model.find_dates(self.ner_dict)
 
         self.ner_dict = annotator.aggregate_dict(self.ner_dict)
+
+        self.ner_dict['entities'] = sorted(self.ner_dict['entities'], key=lambda ner: ner['start_offset'])
+
+        self.ner_dict = annotator.resolve_uri_entities(self.ner_dict, self.path)
+
+        print(self.ner_dict['entities'])
 
         return self.ner_dict
 
@@ -315,18 +332,18 @@ class PathwayGenerator():
         json_pathway = pathway_tmp.to_json(indent=4, orient='records')
         mapped_entities = json.loads(json_pathway)
 
-        dict_pathway = json.loads("tools/dict_pathway.json")
-
-        language = aggregated_ner_dict['language']
+        dict_pathway = json.load(open("tools/dict_pathway.json", 'r'))
 
         self.pathway = {}
 
         #{'physical_office': [{'start', 'end'}...]}
-
         for key, sub_types in dict_pathway.items():
             self.pathway[key] = {}
             for sub_type in sub_types:
-                self.pathway[key][sub_type] = mapped_entities[sub_type]
+                self.pathway[key][sub_type] = []
+
+        for entity in mapped_entities:
+            self.pathway[self.keys_of_value(dict_pathway, entity['step'])][entity['step']].append(entity)  
         
         # {'dove': [], 'come': [], 'quando': []}
 
@@ -334,6 +351,8 @@ class PathwayGenerator():
         return self.pathway
 
     def export_annotation_to_doccano(self, add_confidence=False):
+        filename = os.path.splitext(self.path)[0]
+
         doccano_dict = {}
         doccano_dict['text'] = self.ner_dict['text']
         doccano_dict['labels'] = []
@@ -346,14 +365,14 @@ class PathwayGenerator():
             else:
                 doccano_dict['labels'].append([item['start_offset'], item['end_offset'], item['type']])
 
-        file_out = open(self.path +'_ner.jsonl', 'w', encoding='utf-8')
+        file_out = open(filename +'_ner.jsonl', 'w', encoding='utf-8')
         file_out.write(json.dumps(doccano_dict))
         file_out.write('\n')
 
-        return doccano_dict, self.path +'_ner.jsonl'
+        return doccano_dict, filename +'_ner.jsonl'
 
     def export_generation_to_doccano(self):
-        dict_translations = json.loads("tools/dict_translations.json")
+        dict_translations = json.load(open("tools/dict_translations.json", 'r'))
 
         filename = os.path.splitext(self.path)[0]
         pathway_jsonl = []
@@ -366,35 +385,12 @@ class PathwayGenerator():
             for sub_type, entities in self.pathway[key].items():
                 label = dict_translations[self.language][sub_type] + ': '
                 for entity in entities:
-                    label = label + entity['entity'].strip() + ' ,'
+                    label = label + entity['entity'].strip() + ' , '
 
-                tmp_dict['labels'].append(label[:-1].strip())
+                tmp_dict['labels'].append(label[:-2].strip())
             
             pathway_jsonl.append(tmp_dict)
 
-
-        '''
-
-        where_dict = {"text": "where", "labels": [], "meta": self.generation_metadata['where']}
-        how_dict = {"text": "how", "labels": [], "meta": self.generation_metadata['how']}
-        when_dict = {"text": "when", "labels": [], "meta": self.generation_metadata['when']}
-
-        for entity in self.pathway:
-            if len(entity["entity"].strip()) > 0:
-                if entity["step"] == "where":
-                    if entity["entity"].strip() not in where_dict["labels"]:
-                        where_dict["labels"].append(entity["entity"].strip())
-                elif entity["step"] == "how":
-                    if entity["entity"].strip() not in how_dict["labels"]:
-                        how_dict["labels"].append(entity["entity"].strip())
-                elif entity["step"] == "when":
-                    if entity["entity"].strip() not in when_dict["labels"]:
-                        when_dict["labels"].append(entity["entity"].strip())
-        
-        pathway_jsonl.append(where_dict)
-        pathway_jsonl.append(when_dict)
-        pathway_jsonl.append(how_dict)
-        '''
         file_out = open(filename + '_pathway.jsonl', 'w', encoding='utf-8')
 
         return_string = ''
@@ -407,3 +403,25 @@ class PathwayGenerator():
             return_string = return_string + string_element + '\n'
 
         return return_string, filename + '_pathway.jsonl'
+
+    def keys_of_value(self, dct, value):
+        for k in dct:
+            if isinstance(dct[k], list):
+                if value in dct[k]:
+                    return k
+            else:
+                if value == dct[k]:
+                    return k
+
+    def annotate_sutime(self, ner_dict):
+        for item in ner_dict:
+            text = item['sentence']
+            jar_files = os.path.join('python-sutime/', 'jars')
+            sutime = sutime_mod.SUTime(jars=jar_files, mark_time_ranges=True)
+
+            json = sutime.parse(text)
+            
+            for item_sutime in json:
+                item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.8, 'offset': item_sutime['start']})
+
+        return ner_dict
