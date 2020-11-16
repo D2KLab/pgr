@@ -233,7 +233,6 @@ def generate():
 
         # Check if document already exists: if so, return annotations. Otherwise, create a new one
         if document_annotation:
-            #ner_dict = refactor_export_annotations(document_annotation, project['id'])
             annotations = doccano_client.get_annotation_list(annotation_project['id'], document_annotation['id'])
             
             pgr.ner_dict = doccano_to_dict_format(annotations, document_annotation, annotation_project['id'])
@@ -245,10 +244,7 @@ def generate():
             ner_dict = pgr.do_annotate()
             #app.config['logger'].log()
 
-            #if not document_annotation:
-            #    doccano_dict, ner_path = pgr.export_annotation_to_doccano()
-            #    #app.config['logger'].log()
-
+            doccano_dict, ner_path = pgr.export_annotation_to_doccano()
             try:
                 doccano_client.post_doc_upload(project_id=annotation_project['id'], file_format='json', file_name=ner_path)
             except json.decoder.JSONDecodeError:
