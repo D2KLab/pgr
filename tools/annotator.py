@@ -16,7 +16,7 @@ def aggregate_dict(ner_dict):
     offset = 0
 
     for element in ner_dict:
-        aggregated_dict['text'] = aggregated_dict['text'] + element['sentence'] +'\n'
+        aggregated_dict['text'] = aggregated_dict['text'] + element['sentence'] +'.\n'
         for entity in element['entities']:       
             start_offset = offset + entity['offset']
             end_offset = offset + entity['offset'] + len(entity['value'])
@@ -30,7 +30,7 @@ def aggregate_dict(ner_dict):
                 })
         
         # +1 for the newline
-        offset = offset + len(element['sentence'] + '\n')     
+        offset = offset + len(element['sentence'] + '.\n')     
 
     return aggregated_dict
 
@@ -89,16 +89,13 @@ def resolve_uri_entities(ner_dict, path):
             if entity["type"] == "URI":
                 span = len(entity["value"])
                 url = uri[entity["value"]]
-
-                #####
-                # FIX HERE 
-
-                ####
-                #ner_dict["text"] = replacer(ner_dict["text"], url, entity['start_offset'], span)
-                ner_dict["text"] = re.sub(entity['value'], url, ner_dict['text'], 1)
-
+                
+                #ner_dict["text"] = re.sub(entity['value'], url, ner_dict['text'], 1)
+                ner_dict["text"] = ner_dict['text'].replace(entity['value'], url, 1)
                 entity["value"] = url
                 entity['end_offset'] = entity['start_offset'] + len(url)
+
+
 
                 ner_dict = update_offsets(ner_dict, ner_dict['entities'].index(entity), len(url)-span)
     except KeyError as e:

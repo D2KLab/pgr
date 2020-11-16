@@ -3,6 +3,6 @@
     "web_page":["URI"],
     "deadline" : ["TIME"],
     "response_time" : ["TIME"],
-    "procedure" : ["MISCELLANEOUS", "PROCEDURE"],
-    "document" : ["MISCELLANEOUS", "DOCUMENT"]
+    "procedure" : ["PROCEDURE"],
+    "document" : ["DOCUMENT"]
 }

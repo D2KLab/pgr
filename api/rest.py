@@ -125,6 +125,27 @@ def refactor_export_generations(document_list):
 
     return return_string
 
+def doccano_to_dict_format(annotation_list, document, project_id):
+    # ner_dict = {'text': 'tutto il testo', 'entities': [{'start, end, value, type, confidence}]}
+    ner_dict = {}
+    ner_dict['text'] = document['text']
+    ner_dict['entities'] = []
+    for annotation in annotation_list:
+        element_dict = {}
+        #annotation_detail = doccano_client.get_annotation_detail(project_id, annotation['document'], annotation['id'])
+        label = doccano_client.get_label_detail(project_id, annotation['label'])
+
+        element_dict['start_offset'] = annotation['start_offset']
+        element_dict['end_offset'] = annotation['end_offset']
+        element_dict['confidence'] = 0.8
+        element_dict['type'] = label['text']
+
+        element_dict['value'] = ner_dict['text'][annotation['start_offset']:annotation['end_offset']]
+
+        ner_dict['entities'].append(element_dict)
+        
+    return ner_dict
+
 # curl -i -F data='{"pilot"="Malaga","service"="Asylum Request"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.1/annotate
 @app.route('/v0.2/annotate', methods=['POST'])
 def annotate():
@@ -160,6 +181,7 @@ def annotate():
 
         ner_dict = pgr.do_annotate()
         #app.config['logger'].log()
+        print(ner_dict)
 
         doccano_dict, ner_path = pgr.export_annotation_to_doccano()
         #app.config['logger'].log()
@@ -208,15 +230,24 @@ def generate():
             
             return refactor_export_generations([document_where, document_when, document_how])
 
-        converted_file = pgr.do_convert()
-        #app.config['logger'].log()
 
-        ner_dict = pgr.do_annotate()
-        #app.config['logger'].log()
-
-        if not document_annotation:
-            doccano_dict, ner_path = pgr.export_annotation_to_doccano()
+        # Check if document already exists: if so, return annotations. Otherwise, create a new one
+        if document_annotation:
+            #ner_dict = refactor_export_annotations(document_annotation, project['id'])
+            annotations = doccano_client.get_annotation_list(annotation_project['id'], document_annotation['id'])
+            
+            pgr.ner_dict = doccano_to_dict_format(annotations, document_annotation, annotation_project['id'])
+            
+        else:
+            converted_file = pgr.do_convert()
             #app.config['logger'].log()
+
+            ner_dict = pgr.do_annotate()
+            #app.config['logger'].log()
+
+            #if not document_annotation:
+            #    doccano_dict, ner_path = pgr.export_annotation_to_doccano()
+            #    #app.config['logger'].log()
 
             try:
                 doccano_client.post_doc_upload(project_id=annotation_project['id'], file_format='json', file_name=ner_path)
@@ -227,7 +258,6 @@ def generate():
         #app.config['logger'].log()
 
         pathway_dict, pathway_path = pgr.export_generation_to_doccano()
-        print(pathway_path)
 
         try:
             print('trying to upload documents')

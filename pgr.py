@@ -319,9 +319,9 @@ class PathwayGenerator():
 
         self.ner_dict['entities'] = sorted(self.ner_dict['entities'], key=lambda ner: ner['start_offset'])
 
-        self.ner_dict = annotator.resolve_uri_entities(self.ner_dict, self.path)
+        #print(self.ner_dict)
 
-        print(self.ner_dict['entities'])
+        self.ner_dict = annotator.resolve_uri_entities(self.ner_dict, self.path)
 
         return self.ner_dict
 
