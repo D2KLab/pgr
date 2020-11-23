@@ -1,0 +1,21 @@
+{
+    "PROCEDURE": [
+        "interview",
+        "acquisition",
+        "authentication",
+        "certification"
+    ],
+    "DOCUMENT":[
+        "passport",
+        "id",
+        "license",
+        "exemption",
+        "document",
+        "picture",
+        "card",
+        "signature",
+        "certificate",
+        "visa",
+        "permit"
+    ]
+}

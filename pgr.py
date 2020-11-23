@@ -274,7 +274,7 @@ class PathwayGenerator():
         languages = {
             'Larissa': 'el',
             'Birmingham': 'en',
-            'Malaga': 'en',
+            'Malaga': 'es',
             'Palermo': 'it'
         }
 
