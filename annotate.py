@@ -19,8 +19,8 @@ def to_list(data):
     return element_list
 
 def annotate_transner(sentence_list):
-    model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=False, cuda_device=2)
-    return model.ner(sentence_list, apply_regex=True)
+    model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=False, cuda_device=2, language_detection=True, threshold=0.8)
+    return model.ner(sentence_list, apply_regex=True), model
 
 def annotate_sutime(ner_dict):
     for item in ner_dict:
@@ -38,8 +38,9 @@ def annotate_sutime(ner_dict):
 def main(path=None):   
     sentence_list = to_list(open(path, 'r').read())
 
-    ner_dict = annotate_transner(sentence_list)
-    ner_dict = annotate_sutime(ner_dict)
+    ner_dict, model = annotate_transner(sentence_list)
+    #ner_dict = annotate_sutime(ner_dict)
+    ner_dict = model.find_dates(ner_dict)
 
     ner_dict = annotator.aggregate_dict(ner_dict)
 
