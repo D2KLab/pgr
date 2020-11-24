@@ -1,7 +1,7 @@
 doccano_client_params = {
   'endpoint': 'https://doccano.linksfoundation.com',
-  'username': 'er-links',
-  'password': 'easy27l#'   
+  'username': '#####',
+  'password': '#####'   
 }
 
 pilots_legend = {
