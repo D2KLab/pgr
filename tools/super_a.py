@@ -58,9 +58,9 @@ def manual_annotation(tokens, file_out, statistics_file):
         file_out.write(word + ' ' + tag + '\n')
     file_out.write('\n')
 
-def substitute_hits(tokens, path):
+def substitute_hits(tokens, path, classes):
     # open up taxonomy for documents and procedures and put them into a list
-    file_classes = json.load(open("entity_classes.json", 'r'))
+    file_classes = json.load(open(classes, 'r'))
     elements = list(chain.from_iterable(file_classes.values()))
     
     # open the final modified conll file: name is as the input with _refactored
@@ -92,14 +92,15 @@ def substitute_hits(tokens, path):
         if inf.singularize(tok).lower() in elements:
             found_hit = True
 
-def main(path):
+def main(path, classes):
     # open file data to collect the tokens
     file_data = open(path, 'r')
     tokens = file_data.readlines()
     file_data.close()
 
-    substitute_hits(tokens, path)
+    substitute_hits(tokens, path, classes)
 
+# python3 tools/super_a.py -f datasets/wikiner/wikiner_conll/it/wikinerIT.conll.test -c tools/entity_classes_it.json
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -109,8 +110,13 @@ if __name__ == '__main__':
         help='CONLL file location.',
         required=True
     )
+    parser.add_argument(
+        '-c', 
+        '--classes', 
+        help='filters of class labels', 
+        required=True)
 
     args = parser.parse_args()
 
-    main(path=args.file)
+    main(path=args.file, classes=args.classes)
     
