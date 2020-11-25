@@ -1,0 +1,23 @@
+{
+    "PROCEDURE": [
+        "colloquio",
+        "acquisizione",
+        "autenticazione",
+        "certificazione",
+        "identificazione"
+    ],
+    "DOCUMENT":[
+        "passaporto",
+        "identità",
+        "licenza",
+        "esenzione",
+        "documento",
+        "foto",
+        "carta",
+        "firma",
+        "certificato",
+        "visa",
+        "permesso",
+        "visto"
+    ] 
+}
