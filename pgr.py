@@ -315,10 +315,14 @@ class PathwayGenerator():
 
             for sub_type, entities in self.pathway[key].items():
                 label = dict_translations[self.language][sub_type] + ': '
-                for entity in entities:
-                    label = label + entity['entity'].strip() + ' , '
+                if not entities:
+                    label = label + '-'
+                    tmp_dict['labels'].append(label)
+                else:
+                    for entity in entities:
+                        label = label + entity['entity'].strip() + ' , '
 
-                tmp_dict['labels'].append(label[:-2].strip())
+                    tmp_dict['labels'].append(label[:-2].strip())
             
             pathway_jsonl.append(tmp_dict)
 
