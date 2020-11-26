@@ -19,43 +19,48 @@ def manual_annotation(tokens, file_out, statistics_file):
         #TODO: insert statistics
         #deleting_elements = 
 
-        elements = input('Write here the word/words that have to be annotated: ')
-        sentence_indexes = []
+        while True: 
+            elements = input('Write here the word/words that have to be annotated: ')
+            sentence_indexes = []
 
-        # exit from loop if there are no more annotations to do
-        if elements == '':
-            break
-        for element in elements.split(' '):
-            if int(element) < 0 or int(element) > len(words):
-                print('The element is not present in the sentence.\n')
+            # exit from loop if there are no more annotations to do
+            if elements == '':
+                break
+            for element in elements.split(' '):
+                if int(element) < 0 or int(element) > len(words):
+                    print('The element is not present in the sentence.\n')
+                    continue
+                else:
+                    sentence_indexes.append(int(element)-1)
+
+            annotations = ['PROC', 'DOC']
+            annotation_sym = input('Which type of annotation? Value accepted are PROC[0], DOC[1]: ')
+            if annotation_sym not in ['0', '1']:
+                print('The element is not present in the accepted values.\n')
                 continue
-            else:
-                sentence_indexes.append(int(element)-1)
 
-        annotations = ['PROC', 'DOC']
-        annotation_sym = input('Which type of annotation? Value accepted are PROC[0], DOC[1]: ')
-        if annotation_sym not in ['0', '1']:
-            print('The element is not present in the accepted values.\n')
-            continue
+            # default: substitute the annotation
+            substitute = True
 
-        # default: substitute the annotation
-        substitute = True
+            # check if there are elements with some other tag
+            for idx in sentence_indexes:
+                if tags[idx] != 'O':
+                    response = input('The element ' + words[idx] + ' has already the tag ' + tags[idx] + ', do you want to overwrite it? y/n : ')
+                    if response == 'n':
+                        substitute = False
 
-        # check if there are elements with some other tag
-        for idx in sentence_indexes:
-            if tags[idx] != 'O':
-                response = input('The element ' + words[idx] + ' has already the tag ' + tags[idx] + ', do you want to overwrite it? y/n : ')
-                if response == 'n':
-                    substitute = False
-
-        if substitute:
-            # first element begins with B-
-            tags[sentence_indexes[0]] = 'B-'+annotations[int(annotation_sym)]
-            for idx in sentence_indexes[1:]:
-                # other elements has I-
-                tags[idx] = 'I-'+annotations[int(annotation_sym)]
+            if substitute:
+                # first element begins with B-
+                tags[sentence_indexes[0]] = 'B-'+annotations[int(annotation_sym)]
+                for idx in sentence_indexes[1:]:
+                    # other elements has I-
+                    tags[idx] = 'I-'+annotations[int(annotation_sym)]
         
-        break
+            response = input('\nWould you like to do another annotation y/n : ')
+            if response == 'n':
+                break
+
+        print('\n')
 
     # write to file the new elements modified
     for word, tag in zip(words, tags):
