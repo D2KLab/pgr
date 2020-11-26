@@ -10,8 +10,10 @@ def manual_annotation(tokens, file_out, statistics_file):
 
     while True:
         # print the sentence with tags
+        count = 0
         for word, tag in zip(words, tags):
-            print(word + '[' + tag + '] ', end='')
+            count = count + 1
+            print('{' + str(count) + '}' +word + '[' + tag + '] ', end='')
         print('\n')
 
         #TODO: insert statistics
@@ -24,11 +26,11 @@ def manual_annotation(tokens, file_out, statistics_file):
         if elements == '':
             break
         for element in elements.split(' '):
-            if element not in words:
+            if int(element) < 0 or int(element) > len(words):
                 print('The element is not present in the sentence.\n')
                 continue
             else:
-                sentence_indexes.append(words.index(element))
+                sentence_indexes.append(int(element)-1)
 
         annotations = ['PROC', 'DOC']
         annotation_sym = input('Which type of annotation? Value accepted are PROC[0], DOC[1]: ')
@@ -52,6 +54,8 @@ def manual_annotation(tokens, file_out, statistics_file):
             for idx in sentence_indexes[1:]:
                 # other elements has I-
                 tags[idx] = 'I-'+annotations[int(annotation_sym)]
+        
+        break
 
     # write to file the new elements modified
     for word, tag in zip(words, tags):
