@@ -27,7 +27,7 @@ def manual_annotation(tokens, file_out, statistics_file):
             if elements == '':
                 break
             for element in elements.split(' '):
-                if int(element) < 0 or int(element) > len(words):
+                if int(element) <= 0 or int(element) > len(words):
                     print('The element is not present in the sentence.\n')
                     continue
                 else:
