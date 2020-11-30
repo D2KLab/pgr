@@ -25,6 +25,7 @@ def manual_annotation(tokens, file_out, statistics_file):
         # exit from loop if there are no more annotations to do
 
         if elements == '':
+            print('Pass to the next sentence\n#####################################################\n')
             break
         for element in elements.split(' '):
             if int(element) <= 0 or int(element) > len(words):
@@ -58,9 +59,8 @@ def manual_annotation(tokens, file_out, statistics_file):
     
         response = input('\nWould you like to do another annotation y/n : ')
         if response == 'n':
+            print('Pass to the next sentence\n#####################################################\n')
             break
-
-        print('\n')
 
     # write to file the new elements modified
     for word, tag in zip(words, tags):
