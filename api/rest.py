@@ -165,7 +165,10 @@ def annotate():
         uploaded_file.save(file_path)
 
         # Instantiate PathwayGeneration object
-        pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False)
+        if 'model' in data:
+            pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False, model=data['model'])
+        else:
+            pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False)
 
         # Check for annotation project
         project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Annotated Documents')
@@ -213,7 +216,10 @@ def generate():
         uploaded_file.save(file_path)
 
         # Instantiate PathwayGeneration object
-        pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False)
+        if 'model' in data:
+            pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False, model=data['model'])
+        else:
+            pgr = PathwayGenerator(path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=False)
 
         # Check for projects
         generation_project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Pathways')
