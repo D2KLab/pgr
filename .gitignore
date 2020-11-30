@@ -29,4 +29,6 @@ log/
 lid.176.bin
 
 output/
+models/
 config.py
+rest_log.out
