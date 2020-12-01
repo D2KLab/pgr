@@ -189,7 +189,7 @@ if __name__ == '__main__':
     
 class PathwayGenerator():
 
-    def __init__(self, path, pilot, service, use_cuda, cuda_device=-1):
+    def __init__(self, path, pilot, service, use_cuda, cuda_device=-1, model=None):
         ''' PathwayGenerator object constructor
 
         Args:
@@ -214,7 +214,11 @@ class PathwayGenerator():
         self.cuda_device = cuda_device
         self.language = languages[pilot]
         # TODO: language detection param?
-        self.model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+
+        if model is None:
+            self.model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+        else:
+            self.model = Transner(pretrained_model='bert_uncased_'+model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
 
         self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(path)
         self.generation_metadata = {
