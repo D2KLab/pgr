@@ -1,53 +1,13 @@
 import argparse
-from transner import Transner
-import os
-import re
 
-from tools import annotator
+from pgr import PathwayGenerator
 
-import importlib
-sutime_mod = importlib.import_module("python-sutime.sutime")
+def main(path, pilot, service):   
+    pgr = PathwayGenerator(path=path, pilot=pilot, service=service, use_cuda=True, cuda_device=4, model='en')
+    ner_dict = pgr.do_annotate()
+    doccano_dict, ner_path = pgr.export_annotation_to_doccano()
 
-def to_list(data):
-    element_list = [] # Make an empty list
-
-    for element in re.split('[.\n]', data):
-        stripped_element = element.strip()
-        if stripped_element != '':	    
-            element_list.append(stripped_element) #Append to list the striped element
-    
-    return element_list
-
-def annotate_transner(sentence_list):
-    model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=False, cuda_device=2, language_detection=True, threshold=0.8)
-    return model.ner(sentence_list, apply_regex=True), model
-
-def annotate_sutime(ner_dict):
-    for item in ner_dict:
-        text = item['sentence']
-        jar_files = os.path.join(os.path.dirname(__file__) + 'python-sutime/', 'jars')
-        sutime = sutime_mod.SUTime(jars=jar_files, mark_time_ranges=True)
-
-        json = sutime.parse(text)
-        
-        for item_sutime in json:
-            item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.8, 'offset': item_sutime['start']})
-
-    return ner_dict
-
-def main(path=None):   
-    sentence_list = to_list(open(path, 'r').read())
-
-    ner_dict, model = annotate_transner(sentence_list)
-    #ner_dict = annotate_sutime(ner_dict)
-    ner_dict = model.find_dates(ner_dict)
-
-    ner_dict = annotator.aggregate_dict(ner_dict)
-
-    #ner_dict = resolve_uri_entities(ner_dict, path)
-
-    annotator.export_to_json(ner_dict, os.path.splitext(path)[0])
-    annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
+    print('Annotation process ended. You can find the jsonl at the following path: {}'.format(ner_path))
 
 if __name__ == '__main__':
     """Input example:
@@ -62,9 +22,23 @@ if __name__ == '__main__':
         '-f',
         '--file',
         help='List of files to be converted before transner',
-        required=False
+        required=True
+    )
+
+    parser.add_argument(
+        '-p',
+        '--pilot',
+        help='Specify pilot.',
+        required=True
+    )
+
+    parser.add_argument(
+        '-s',
+        '--service',
+        help='Specify service.',
+        required=True
     )
 
     args = parser.parse_args()
 
-    main(path=args.file)
+    main(path=args.file, pilot=args.pilot, service=args.service)

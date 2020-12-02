@@ -153,13 +153,6 @@ def main(path=None, empty=False, convert=True):
         pathway_to_doccano(json.loads(json_pathway), path)
 
 if __name__ == '__main__':
-    """Input example:
-
-        $python usage.py --strings \
-            "Mario è nato a Milano" \
-            "The war of Orleans"
-    """
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -181,6 +174,20 @@ if __name__ == '__main__':
         help='Specify if you need the file conversion. Default is true.',
         required=False
     )
+
+    parser.add_argument(
+        '-p',
+        '--pilot',
+        help='Specify if you need the file conversion. Default is true.',
+        required=False
+    )
+
+    parser.add_argument(
+        '-s',
+        '--service',
+        help='Specify if you need the file conversion. Default is true.',
+        required=False
+    )
     args = parser.parse_args()
 
 
@@ -189,7 +196,7 @@ if __name__ == '__main__':
     
 class PathwayGenerator():
 
-    def __init__(self, path, pilot, service, use_cuda, cuda_device=-1, model=None):
+    def __init__(self, path, pilot, service, use_cuda=False, cuda_device=-1, model=None):
         ''' PathwayGenerator object constructor
 
         Args:
@@ -210,6 +217,8 @@ class PathwayGenerator():
         }
 
         self.path = path
+        if os.path.splitext(path)[-1] == '.txt':
+            self.converted_file = doc2txt.purge_urls(open(path, 'r').read(), os.path.splitext(path)[0])
         self.use_cuda = use_cuda
         self.cuda_device = cuda_device
         self.language = languages[pilot]
@@ -245,6 +254,12 @@ class PathwayGenerator():
         sentence_list = self.to_list()
 
         self.ner_dict = self.model.ner(sentence_list, apply_regex=True)
+
+        file_debug = open('file_debug.txt', 'w')
+        for item in self.ner_dict:
+            file_debug.write(item['sentence']+'\n')
+            file_debug.write(json.dumps(item['entities'], indent=4) +'\n')
+
         if self.language in ['es', 'en']:
             self.ner_dict = self.annotate_sutime(self.ner_dict)
         else:
@@ -253,8 +268,6 @@ class PathwayGenerator():
         self.ner_dict = annotator.aggregate_dict(self.ner_dict)
 
         self.ner_dict['entities'] = sorted(self.ner_dict['entities'], key=lambda ner: ner['start_offset'])
-
-        #print(self.ner_dict)
 
         self.ner_dict = annotator.resolve_uri_entities(self.ner_dict, self.path)
 
@@ -361,6 +374,7 @@ class PathwayGenerator():
             json = sutime.parse(text)
             
             for item_sutime in json:
-                item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.85, 'offset': item_sutime['start']})
+                if not self.model.find_overlap(item['entities'], item_sutime['start'], item_sutime['end']):
+                    item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.85, 'offset': item_sutime['start']})
 
         return ner_dict
