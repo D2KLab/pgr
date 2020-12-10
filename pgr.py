@@ -255,11 +255,6 @@ class PathwayGenerator():
 
         self.ner_dict = self.model.ner(sentence_list, apply_regex=True)
 
-        file_debug = open('file_debug.txt', 'w')
-        for item in self.ner_dict:
-            file_debug.write(item['sentence']+'\n')
-            file_debug.write(json.dumps(item['entities'], indent=4) +'\n')
-
         if self.language in ['es', 'en']:
             self.ner_dict = self.annotate_sutime(self.ner_dict)
         else:
