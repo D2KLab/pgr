@@ -269,6 +269,8 @@ class PathwayGenerator():
         return self.ner_dict
 
     def do_generate(self):
+        if os.path.splitext(self.path)[-1] == '.json':
+            self.ner_dict = json.load(open(self.path, 'r'))
         aggregated_ner_dict = aggregator.aggregate_entities(self.ner_dict)
 
         pathway_tmp = generator.generate(aggregated_ner_dict)
