@@ -5,7 +5,7 @@
 		"how": "come",
 		"physical_office" : "ufficio",
 		"web_page": "sito web",
-		"deadline" : "scadenza",
+		"opening_time" : "orario apertura",
 		"response_time": "tempo della risposta",
 		"procedure": "procedura",
 		"document": "documento"
@@ -16,7 +16,7 @@
 		"how" : "how",
 		"physical_office" : "physical office",
 		"web_page": "web site",
-		"deadline" : "deadline",
+		"opening_time" : "opening time",
 		"response_time": "response time",
 		"procedure": "procedure",
 		"document": "document"
@@ -27,7 +27,7 @@
 		"how": "cómo",
         "physical_office" : "oficina fisica",
 		"web_page": "sitio web",
-		"deadline" : "fecha límite",
+		"opening_time" : "hora de apertura",
 		"response_time": "tiempo de respuesta",
 		"procedure": "procedimiento",
 		"document": "documento"
@@ -38,7 +38,7 @@
         "how":"πως",
         "physical_office" : "φυσικό γραφείο",
         "web_page": "ιστοσελίδα",
-        "deadline" : "προθεσμία",
+        "opening_time" : "ωρα ανοιγματος",
         "response_time": "χρόνος απόκρισης",
         "procedure": "διαδικασία",
         "document": "έγγραφο"
