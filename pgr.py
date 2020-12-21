@@ -272,9 +272,7 @@ class PathwayGenerator():
         if os.path.splitext(self.path)[-1] == '.json':
             self.ner_dict = json.load(open(self.path, 'r'))
         aggregated_ner_dict = aggregator.aggregate_entities(self.ner_dict)
-
-        pathway_tmp = generator.generate(aggregated_ner_dict)
-        json_pathway = pathway_tmp.to_json(indent=4, orient='records')
+        json_pathway = generator.generate(aggregated_ner_dict)
         mapped_entities = json.loads(json_pathway)
 
         dict_pathway = json.load(open("tools/dict_pathway.json", 'r'))
@@ -370,8 +368,10 @@ class PathwayGenerator():
 
             json = sutime.parse(text)
             
+            time_type = self.model.check_opening_time(item['entities'])
+
             for item_sutime in json:
                 if not self.model.find_overlap(item['entities'], item_sutime['start'], item_sutime['end']):
-                    item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.85, 'offset': item_sutime['start']})
+                    item['entities'].append({'type': time_type, 'value': item_sutime['text'], 'confidence': 0.85, 'offset': item_sutime['start']})
 
         return ner_dict

@@ -15,7 +15,7 @@ def generate(ner_dict):
     for step in steps:
         result_pathway = result_pathway.append(remove_duplicates(pathway.loc[pathway['step'] == step, :]))
     
-    return result_pathway
+    return result_pathway.to_json(indent=4, orient='records')
 
 def generate_pathway(ner_dict):
     info_subtypes = {}

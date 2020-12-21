@@ -1,7 +1,7 @@
 {
     "physical_office":["ORGANIZATION", "LOCATION"],
     "web_page":["URI"],
-    "deadline" : ["TIME"],
+    "opening_time" : ["T_OPENING"],
     "response_time" : ["TIME"],
     "procedure" : ["PROCEDURE"],
     "document" : ["DOCUMENT"]
