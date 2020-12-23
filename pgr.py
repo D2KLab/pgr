@@ -12,190 +12,7 @@ from tools import annotator, aggregator, generator
 import importlib
 sutime_mod = importlib.import_module("python-sutime.sutime")
 
-def pathway_to_doccano(json_pathway, path, pilot='', service=''):
-    metadata = os.path.basename(path) if pilot == '' else pilot + ' - ' + service + ' - ' + os.path.basename(path)
-    filename = os.path.splitext(path)[0]
-    pathway_jsonl = []
-    where_dict = {"text": "where", "labels": [], "meta": metadata + ' where'}
-    how_dict = {"text": "how", "labels": [], "meta": metadata + ' how'}
-    when_dict = {"text": "when", "labels": [], "meta": metadata + ' when'}
-
-    for entity in json_pathway:
-        if len(entity["entity"].strip()) > 0:
-            if entity["step"] == "where":
-                if entity["entity"].strip() not in where_dict["labels"]:
-                    where_dict["labels"].append(entity["entity"].strip())
-            elif entity["step"] == "how":
-                if entity["entity"].strip() not in how_dict["labels"]:
-                    how_dict["labels"].append(entity["entity"].strip())
-            elif entity["step"] == "when":
-                if entity["entity"].strip() not in when_dict["labels"]:
-                    when_dict["labels"].append(entity["entity"].strip())
-    
-    pathway_jsonl.append(where_dict)
-    pathway_jsonl.append(when_dict)
-    pathway_jsonl.append(how_dict)
-    file_out = open(filename + '_pathway.jsonl', 'w', encoding='utf-8')
-
-    return_string = ''
-
-    for element in pathway_jsonl:
-        string_element = str(json.dumps(element, ensure_ascii=False))
-        file_out.write(string_element)
-        file_out.write('\n')
-
-        return_string = return_string + string_element + '\n'
-
-    return return_string, filename + '_pathway.jsonl'
-
-def export_to_json(ner_dict, path):
-    json_file = json.dumps(ner_dict, indent=4)
-    filename = re.sub('_ner.json', '_cluster.json', path)
-    f = open(filename, 'w')
-    f.write(json_file)
-    f.close()
-
-def to_list(data):
-    element_list = [] # Make an empty list
-
-    for element in re.split('[.\n]', data):
-        stripped_element = element.strip()
-        if stripped_element != '':	    
-            element_list.append(stripped_element) #Append to list the striped element
-    
-    return element_list
-
-def annotate_transner(sentence_list):
-    model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=False, cuda_device=2, language_detection=True)
-    ner_dict = model.ner(sentence_list, apply_regex=True)
-    ner_dict = model.find_dates(ner_dict)
-    return ner_dict
-
-def annotate_sutime(ner_dict):
-    for item in ner_dict:
-        text = item['sentence']
-        jar_files = os.path.join('python-sutime/', 'jars')
-        sutime = sutime_mod.SUTime(jars=jar_files, mark_time_ranges=True)
-
-        json = sutime.parse(text)
-        
-        for item_sutime in json:
-            item['entities'].append({'type': 'TIME', 'value': item_sutime['text'], 'confidence': 0.85, 'offset': item_sutime['start']})
-
-    return ner_dict
-
-def document_exists(metadata, project_id):
-    document_list = doccano_client.get_document_list(project_id=project_id)
-
-    document = []
-
-    for doc in document_list['results']:
-        if doc['meta'].startswith("'") and doc['meta'].endswith("'"):
-            meta = doc['meta'].replace('"', '')
-        if doc['meta'].startswith('"') and doc['meta'].endswith('"'):
-            meta = doc['meta'].replace('"', '')
-        print(meta)
-        print(metadata)
-        if meta == metadata:
-            document.append(doc)
-
-    if len(document) > 0:
-        print('The document uploaded already exists. Returning the annotation related.')
-        return document[0]
-    
-    return False
-
-def get_project_by_name(name):
-    project_list = doccano_client.get_project_list()
-
-    try:
-        project = [prj for prj in project_list if prj['name'] == name][0]
-    except IndexError as e:
-        raise(Exception(e))
-
-    return project
-
-def main(path=None, empty=False, convert=True):
-
-    # convert.py
-    if convert:
-        converted_file = doc2txt.convert_to_txt(path)
-    else:
-        converted_file = open(path, 'r').read()
-
-    # annotate.py
-    sentence_list = to_list(converted_file)
-
-    if empty:
-        ner_dict = {'text': '', 'entities': []}
-        for sentence in sentence_list:
-            ner_dict['text'] = ner_dict['text'] + sentence +'.\n'
-
-        annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
-
-    else:
-        ner_dict = annotate_transner(sentence_list)
-        #ner_dict = annotate_sutime(ner_dict)
-
-        ner_dict = annotator.aggregate_dict(ner_dict)
-
-        #ner_dict = resolve_uri_entities(ner_dict, path)
-
-        annotator.export_to_doccano(ner_dict, os.path.splitext(path)[0])
-
-        # aggregate.py
-        aggregated_ner_dict = aggregator.aggregate_entities(ner_dict)
-
-        # generate.py
-        pathway = generator.generate(aggregated_ner_dict)
-        json_pathway = pathway.to_json(orient='records')
-
-        pathway_to_doccano(json.loads(json_pathway), path)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        '-f',
-        '--path',
-        help='List of files to be converted before transner',
-        required=True
-    )
-
-    parser.add_argument(
-        '-e',
-        '--empty',
-        help='Specify if the jsonl output for doccano needs to be empty. Default is false.',
-        required=False
-    )
-    parser.add_argument(
-        '-c',
-        '--convert',
-        help='Specify if you need the file conversion. Default is true.',
-        required=False
-    )
-
-    parser.add_argument(
-        '-p',
-        '--pilot',
-        help='Specify if you need the file conversion. Default is true.',
-        required=False
-    )
-
-    parser.add_argument(
-        '-s',
-        '--service',
-        help='Specify if you need the file conversion. Default is true.',
-        required=False
-    )
-    args = parser.parse_args()
-
-
-    main(path=args.path, empty=args.empty, convert=args.convert)
-
-    
 class PathwayGenerator():
-
     def __init__(self, path, pilot, service, use_cuda=False, cuda_device=-1, model=None):
         ''' PathwayGenerator object constructor
 
@@ -223,7 +40,6 @@ class PathwayGenerator():
         self.cuda_device = cuda_device
         self.language = languages[pilot]
         # TODO: language detection param?
-
         if model is None:
             self.model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
         else:
@@ -231,9 +47,9 @@ class PathwayGenerator():
 
         self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(path)
         self.generation_metadata = {
-            'where': pilot + ' - ' + service + ' - ' + 'Where - ' + os.path.basename(path),
-            'when': pilot + ' - ' + service + ' - ' + 'When - ' + os.path.basename(path),
-            'how': pilot + ' - ' + service + ' - ' + 'How - ' + os.path.basename(path)
+            'where': pilot + ' - ' + service + ' - ' + 'Where - ' + os.path.basename(path) + ' - ',
+            'when': pilot + ' - ' + service + ' - ' + 'When - ' + os.path.basename(path) + ' - ',
+            'how': pilot + ' - ' + service + ' - ' + 'How - ' + os.path.basename(path) + ' - '
         }
 
     def to_list(self):
@@ -250,11 +66,38 @@ class PathwayGenerator():
         self.converted_file = doc2txt.convert_to_txt(self.path)
         return self.converted_file
 
-    def do_annotate(self):
+    def do_split(self):
+        '''return [['test 1 of the section 1', 'test 2 of the section 1', 'test 3 of the section 1']#,
+                #['test 1 of the section 2', 'test 2 of the section 2'],
+                #['test 1 of the section 3']
+        ]'''
         sentence_list = self.to_list()
 
-        self.ner_dict = self.model.ner(sentence_list, apply_regex=True)
+        model = CrossEncoder('MODEL_PATH', num_labels=1)
+        scores = []
+        for i in range(0, len(sentence_list)-1):
+            current_sentence = sentence_list[i]
+            next_sentence = sentence_list[i+1]
 
+            score = model.predict([current_sentence, next_sentence])
+            scores.append(score)
+        
+        sections = [] # sections = [['section1'], ['section2'], ... , ['sectionN']]
+        section_text = []
+        section_text.append(sentence_list[0])
+        for i in range(0, len(scores)):
+            if scores[i] >= threshold:
+                section_text.append(sentence_list[i+1])              
+            else:
+                sections.append(section_text)
+                section_text = []
+                section_text.append(sentence_list[i+1])
+        sections.append(section_text)
+
+        return sections
+
+    def do_annotate(self, sentence_list):
+        self.ner_dict = self.model.ner(sentence_list, apply_regex=True)
         if self.language in ['es', 'en']:
             self.ner_dict = self.annotate_sutime(self.ner_dict)
         else:
@@ -272,6 +115,7 @@ class PathwayGenerator():
         if os.path.splitext(self.path)[-1] == '.json':
             self.ner_dict = json.load(open(self.path, 'r'))
         aggregated_ner_dict = aggregator.aggregate_entities(self.ner_dict)
+        #aggregated_ner_dict = self.ner_dict = {'text': 'test 1 of the section 1.\ntest 2 of the section 1.\ntest 3 of the section 1.\n', 'entities': {'LOCATION': [{'value': 'test', 'confidence': 0.9737, 'start_offset': 0, 'end_offset': 4}], 'ORGANIZATION': [{'value': 'test', 'confidence': 0.9676, 'start_offset': 25, 'end_offset': 29}], 'TIME': [{'value': 'test', 'confidence': 0.9573, 'start_offset': 50, 'end_offset': 54}]}}
         json_pathway = generator.generate(aggregated_ner_dict)
         mapped_entities = json.loads(json_pathway)
 
@@ -314,27 +158,29 @@ class PathwayGenerator():
 
         return doccano_dict, filename +'_ner.jsonl'
 
-    def export_generation_to_doccano(self):
+    def export_generation_to_doccano(self, pathway=None):
         dict_translations = json.load(open("tools/dict_translations.json", 'r'))
 
         filename = os.path.splitext(self.path)[0]
         pathway_jsonl = []
 
-        for key in self.pathway:
+        for key in pathway:
             tmp_dict = {"text": '', "labels": [], "meta": ''}
-            tmp_dict["text"] = dict_translations[self.language][key]
-            tmp_dict["meta"] = self.generation_metadata[key]
+            tmp_dict["text"] = key
+            
 
-            for sub_type, entities in self.pathway[key].items():
-                label = dict_translations[self.language][sub_type] + ': '
-                if not entities:
-                    label = label + '-'
-                    tmp_dict['labels'].append(label)
-                else:
-                    for entity in entities:
-                        label = label + entity['entity'].strip() + ' , '
+            for step, step_dict in pathway[key].items():
+                tmp_dict["meta"] = self.generation_metadata[step] + key
+                for sub_type, entities in step_dict.items():
+                    label = dict_translations[self.language][step] + ' - ' + dict_translations[self.language][sub_type] + ': '
+                    if len(entities) == 0:
+                        label = label + '-'
+                        tmp_dict['labels'].append(label)
+                    else:
+                        for entity in entities:
+                            label = label + entity['entity'].strip() + ' , '
 
-                    tmp_dict['labels'].append(label[:-2].strip())
+                        tmp_dict['labels'].append(label[:-2].strip())                  
             
             pathway_jsonl.append(tmp_dict)
 
@@ -375,3 +221,60 @@ class PathwayGenerator():
                     item['entities'].append({'type': time_type, 'value': item_sutime['text'], 'confidence': 0.85, 'offset': item_sutime['start']})
 
         return ner_dict
+
+def main(path=None, empty=False, convert=True, pilot='', service=''):
+    pgr = PathwayGenerator(path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, model='en')
+    converted_file = pgr.do_convert()
+    sentence_list = pgr.do_split()
+    full_ner_dict = {}
+    count = 1
+    for sentence in sentence_list:
+        pgr.model.reset_preprocesser()
+        ner_dict = pgr.do_annotate(sentence)
+        pathway = pgr.do_generate()
+        label = 'Step'+str(count)
+        full_ner_dict[label] = pathway
+        count = count + 1
+    pathway_dict, pathway_path = pgr.export_generation_to_doccano(full_ner_dict)
+    print(pathway_dict)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '-f',
+        '--path',
+        help='List of files to be converted before transner',
+        required=True
+    )
+
+    parser.add_argument(
+        '-e',
+        '--empty',
+        help='Specify if the jsonl output for doccano needs to be empty. Default is false.',
+        required=False
+    )
+    parser.add_argument(
+        '-c',
+        '--convert',
+        help='Specify if you need the file conversion. Default is true.',
+        required=False
+    )
+
+    parser.add_argument(
+        '-p',
+        '--pilot',
+        help='Specify pilot.',
+        required=False
+    )
+
+    parser.add_argument(
+        '-s',
+        '--service',
+        help='Specify service.',
+        required=False
+    )
+    args = parser.parse_args()
+
+
+    main(path=args.path, empty=args.empty, convert=args.convert, pilot=args.pilot, service=args.service)
