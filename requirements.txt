@@ -51,3 +51,4 @@ dateparser
 fasttext
 logstash-formatter
 inflection
+sentence-transformers
