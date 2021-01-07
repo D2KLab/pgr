@@ -9,11 +9,21 @@ from doc2txt import doc2txt
 
 from tools import annotator, aggregator, generator
 
+from sentence_transformers.cross_encoder import CrossEncoder
+
 import importlib
 sutime_mod = importlib.import_module("python-sutime.sutime")
 
 class PathwayGenerator():
-    def __init__(self, path, pilot, service, use_cuda=False, cuda_device=-1, model=None):
+    def __init__(self, file_path, pilot, service, use_cuda=False, cuda_device=-1, annotation_model=None, section_split_model=None):
+
+        '''
+        definire meglio i parametri di input per descrivere a cosa si riferiscono
+
+        path -> file_path
+
+        '''
+
         ''' PathwayGenerator object constructor
 
         Args:
@@ -33,17 +43,19 @@ class PathwayGenerator():
             'Palermo': 'it'
         }
 
-        self.path = path
+        self.path = file_path
         if os.path.splitext(path)[-1] == '.txt':
             self.converted_file = doc2txt.purge_urls(open(path, 'r').read(), os.path.splitext(path)[0])
         self.use_cuda = use_cuda
         self.cuda_device = cuda_device
         self.language = languages[pilot]
         # TODO: language detection param?
-        if model is None:
-            self.model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+        if annotation_model is None:
+            self.annotation_model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
         else:
-            self.model = Transner(pretrained_model='bert_uncased_'+model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+            self.annotation_model = Transner(pretrained_model='bert_uncased_'+ annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+
+        self.section_split_model = CrossEncoder(section_split_model, num_labels=1)
 
         self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(path)
         self.generation_metadata = {
@@ -73,13 +85,12 @@ class PathwayGenerator():
         ]'''
         sentence_list = self.to_list()
 
-        model = CrossEncoder('MODEL_PATH', num_labels=1)
         scores = []
         for i in range(0, len(sentence_list)-1):
             current_sentence = sentence_list[i]
             next_sentence = sentence_list[i+1]
 
-            score = model.predict([current_sentence, next_sentence])
+            score = self.section_split_model.predict([current_sentence, next_sentence])
             scores.append(score)
         
         sections = [] # sections = [['section1'], ['section2'], ... , ['sectionN']]
@@ -97,11 +108,11 @@ class PathwayGenerator():
         return sections
 
     def do_annotate(self, sentence_list):
-        self.ner_dict = self.model.ner(sentence_list, apply_regex=True)
+        self.ner_dict = self.annotation_model.ner(sentence_list, apply_regex=True)
         if self.language in ['es', 'en']:
             self.ner_dict = self.annotate_sutime(self.ner_dict)
         else:
-            self.ner_dict = self.model.find_dates(self.ner_dict)
+            self.ner_dict = self.annotation_model.find_dates(self.ner_dict)
 
         self.ner_dict = annotator.aggregate_dict(self.ner_dict)
 
@@ -214,23 +225,23 @@ class PathwayGenerator():
 
             json = sutime.parse(text)
             
-            time_type = self.model.check_opening_time(item['entities'])
+            time_type = self.annotation_model.check_opening_time(item['entities'])
 
             for item_sutime in json:
-                if not self.model.find_overlap(item['entities'], item_sutime['start'], item_sutime['end']):
+                if not self.annotation_model.find_overlap(item['entities'], item_sutime['start'], item_sutime['end']):
                     item['entities'].append({'type': time_type, 'value': item_sutime['text'], 'confidence': 0.85, 'offset': item_sutime['start']})
 
         return ner_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, model='en')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='en')
     converted_file = pgr.do_convert()
-    sentence_list = pgr.do_split()
+    sections = pgr.do_split()
     full_ner_dict = {}
     count = 1
-    for sentence in sentence_list:
-        pgr.model.reset_preprocesser()
-        ner_dict = pgr.do_annotate(sentence)
+    for section in sections:
+        pgr.annotation_model.reset_preprocesser()
+        ner_dict = pgr.do_annotate(section)
         pathway = pgr.do_generate()
         label = 'Step'+str(count)
         full_ner_dict[label] = pathway
