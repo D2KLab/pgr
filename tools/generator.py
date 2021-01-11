@@ -49,11 +49,15 @@ def compute_pertinence(pathway):
     return p_df
 
 def remove_duplicates(pathway):
-    tmp_pathway = pathway.copy()
-    tmp_pathway['pivot_column'] = tmp_pathway['entity'].str.strip()
-    tmp_pathway['pivot_column'] = tmp_pathway['pivot_column'].str.lower()
-    tmp_pathway = tmp_pathway.drop_duplicates(subset=['pivot_column'], keep="first")
-    tmp_pathway = tmp_pathway.drop(columns = 'pivot_column')
-    tmp_pathway = tmp_pathway.reset_index(drop = True)
+    if pathway.empty:
+        print('The Dataframe is empty!')
+        return pathway
+    else:
+        tmp_pathway = pathway.copy()
+        tmp_pathway['pivot_column'] = tmp_pathway['entity'].str.strip()
+        tmp_pathway['pivot_column'] = tmp_pathway['pivot_column'].str.lower()
+        tmp_pathway = tmp_pathway.drop_duplicates(subset=['pivot_column'], keep="first")
+        tmp_pathway = tmp_pathway.drop(columns = 'pivot_column')
+        tmp_pathway = tmp_pathway.reset_index(drop = True)
 
-    return tmp_pathway
+        return tmp_pathway

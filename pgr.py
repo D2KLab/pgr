@@ -71,12 +71,7 @@ class PathwayGenerator():
         self.converted_file = doc2txt.convert_to_txt(self.path)
         return self.converted_file
 
-    def do_split(self, threshold=0.9):
-        #return [
-        #    ['To refugees in Spain, namely those with a well-founded fear of being persecuted in their country for reasons of race, religion, nationality, political opinions, belonging to a particular social group, gender or sexual orientation', 'If you find yourself in any of the aforementioned situations and you need protection from the Spanish authorities, you must submit a request for international protection'],
-        #    ['You will have to attend an interview in which you must answer a series of questions regarding your personal data, and in which you must explain all the reasons for which you are applying for international protection at Office of Asylum Refugees and how you arrived in Spain'],
-        #    ['All applications, regardless of who submits them, are examined by the Office of Asylum and Refuge', 'Decisions are made by the Ministry of the Interior', 'For decisions on applications admitted for processing, the Ministry of the Interior decides at the proposal of the lnterministerial Commission for Asylum and Refuge']
-        #]
+    def do_split(self, threshold=0.5):
         sentence_list = self.to_list()
 
         scores = []
@@ -90,6 +85,8 @@ class PathwayGenerator():
         sections = [] # sections = [['section1'], ['section2'], ... , ['sectionN']]
         section_text = []
         section_text.append(sentence_list[0])
+        print(scores)
+        input()
         for i in range(0, len(scores)):
             if scores[i] >= threshold:
                 section_text.append(sentence_list[i+1])              
@@ -228,17 +225,35 @@ class PathwayGenerator():
 
         return ner_dict
 
+    def sections_to_doccano(self, sections):
+        count, step = 0, 1 
+        doccano_dict = {'text': '', 'labels': []}
+
+        for section in sections:
+            initial_count, final_count = count, 0
+
+            for sentence in section:
+                doccano_dict['text'] = doccano_dict['text'] + sentence + '.\n'
+                final_count = final_count + len(sentence) + 2
+
+            doccano_dict['labels'].append([initial_count, initial_count+final_count-1, 'Step'+str(step)])
+            step = step + 1
+            count = initial_count+final_count
+
+        return doccano_dict
+
 def main(path=None, empty=False, convert=True, pilot='', service=''):
     pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='en', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
+    file_out = open('section_log.jsonl', 'w', encoding='utf-8')
+    test_section = pgr.sections_to_doccano(sections)
+    file_out.write(json.dumps(test_section))
     full_ner_dict = {}
     count = 1
     for section in sections:
         pgr.annotation_model.reset_preprocesser()
         ner_dict = pgr.do_annotate(section)
-        print(ner_dict)
-        input()
         pathway = pgr.do_generate()
         label = 'Step'+str(count)
         full_ner_dict[label] = pathway
