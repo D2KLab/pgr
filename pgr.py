@@ -17,13 +17,6 @@ sutime_mod = importlib.import_module("python-sutime.sutime")
 class PathwayGenerator():
     def __init__(self, file_path, pilot, service, use_cuda=False, cuda_device=-1, annotation_model=None, section_split_model=None):
 
-        '''
-        definire meglio i parametri di input per descrivere a cosa si riferiscono
-
-        path -> file_path
-
-        '''
-
         ''' PathwayGenerator object constructor
 
         Args:
@@ -34,7 +27,7 @@ class PathwayGenerator():
             cuda_device (int, optional): Id of the gpu device to use. Defaults to -1.
         '''
 
-        assert path is not None, "A file path is required"
+        assert file_path is not None, "A file path is required"
 
         languages = {
             'Larissa': 'el',
@@ -44,8 +37,8 @@ class PathwayGenerator():
         }
 
         self.path = file_path
-        if os.path.splitext(path)[-1] == '.txt':
-            self.converted_file = doc2txt.purge_urls(open(path, 'r').read(), os.path.splitext(path)[0])
+        if os.path.splitext(self.path)[-1] == '.txt':
+            self.converted_file = doc2txt.purge_urls(open(self.path, 'r').read(), os.path.splitext(self.path)[0])
         self.use_cuda = use_cuda
         self.cuda_device = cuda_device
         self.language = languages[pilot]
@@ -53,15 +46,15 @@ class PathwayGenerator():
         if annotation_model is None:
             self.annotation_model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
         else:
-            self.annotation_model = Transner(pretrained_model='bert_uncased_'+ annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+            self.annotation_model = Transner(pretrained_model='bert_uncased_'+annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
 
-        self.section_split_model = CrossEncoder(section_split_model, num_labels=1)
+        #self.section_split_model = CrossEncoder(section_split_model, num_labels=1, from_tf=True)
 
-        self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(path)
+        self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(self.path)
         self.generation_metadata = {
-            'where': pilot + ' - ' + service + ' - ' + 'Where - ' + os.path.basename(path) + ' - ',
-            'when': pilot + ' - ' + service + ' - ' + 'When - ' + os.path.basename(path) + ' - ',
-            'how': pilot + ' - ' + service + ' - ' + 'How - ' + os.path.basename(path) + ' - '
+            'where': pilot + ' - ' + service + ' - ' + 'Where - ' + os.path.basename(self.path) + ' - ',
+            'when': pilot + ' - ' + service + ' - ' + 'When - ' + os.path.basename(self.path) + ' - ',
+            'how': pilot + ' - ' + service + ' - ' + 'How - ' + os.path.basename(self.path) + ' - '
         }
 
     def to_list(self):
@@ -78,11 +71,12 @@ class PathwayGenerator():
         self.converted_file = doc2txt.convert_to_txt(self.path)
         return self.converted_file
 
-    def do_split(self):
-        '''return [['test 1 of the section 1', 'test 2 of the section 1', 'test 3 of the section 1']#,
-                #['test 1 of the section 2', 'test 2 of the section 2'],
-                #['test 1 of the section 3']
-        ]'''
+    def do_split(self, threshold=0.9):
+        return [
+            ['To refugees in Spain, namely those with a well-founded fear of being persecuted in their country for reasons of race, religion, nationality, political opinions, belonging to a particular social group, gender or sexual orientation', 'If you find yourself in any of the aforementioned situations and you need protection from the Spanish authorities, you must submit a request for international protection'],
+            ['You will have to attend an interview in which you must answer a series of questions regarding your personal data, and in which you must explain all the reasons for which you are applying for international protection at Office of Asylum Refugees and how you arrived in Spain'],
+            ['All applications, regardless of who submits them, are examined by the Office of Asylum and Refuge', 'Decisions are made by the Ministry of the Interior', 'For decisions on applications admitted for processing, the Ministry of the Interior decides at the proposal of the lnterministerial Commission for Asylum and Refuge']
+        ]
         sentence_list = self.to_list()
 
         scores = []
@@ -126,6 +120,7 @@ class PathwayGenerator():
         if os.path.splitext(self.path)[-1] == '.json':
             self.ner_dict = json.load(open(self.path, 'r'))
         aggregated_ner_dict = aggregator.aggregate_entities(self.ner_dict)
+        print(aggregated_ner_dict)
         #aggregated_ner_dict = self.ner_dict = {'text': 'test 1 of the section 1.\ntest 2 of the section 1.\ntest 3 of the section 1.\n', 'entities': {'LOCATION': [{'value': 'test', 'confidence': 0.9737, 'start_offset': 0, 'end_offset': 4}], 'ORGANIZATION': [{'value': 'test', 'confidence': 0.9676, 'start_offset': 25, 'end_offset': 29}], 'TIME': [{'value': 'test', 'confidence': 0.9573, 'start_offset': 50, 'end_offset': 54}]}}
         json_pathway = generator.generate(aggregated_ner_dict)
         mapped_entities = json.loads(json_pathway)
@@ -234,7 +229,7 @@ class PathwayGenerator():
         return ner_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='en')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='en')#, section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
     full_ner_dict = {}
@@ -242,6 +237,8 @@ def main(path=None, empty=False, convert=True, pilot='', service=''):
     for section in sections:
         pgr.annotation_model.reset_preprocesser()
         ner_dict = pgr.do_annotate(section)
+        print(ner_dict)
+        input()
         pathway = pgr.do_generate()
         label = 'Step'+str(count)
         full_ner_dict[label] = pathway

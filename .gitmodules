@@ -10,3 +10,6 @@
 [submodule "doccano_api_client"]
 	path = doccano_api_client
 	url = https://github.com/doccano/doccano_api_client.git
+[submodule "sentence-transformers"]
+	path = sentence-transformers
+	url = https://github.com/UKPLab/sentence-transformers.git
