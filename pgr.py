@@ -44,11 +44,11 @@ class PathwayGenerator():
         self.language = languages[pilot]
         # TODO: language detection param?
         if annotation_model is None:
-            self.annotation_model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+            self.annotation_model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
         else:
-            self.annotation_model = Transner(pretrained_model='bert_uncased_'+annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85)
+            self.annotation_model = Transner(pretrained_model='bert_uncased_'+annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
 
-        #self.section_split_model = CrossEncoder(section_split_model, num_labels=1, from_tf=True)
+        self.section_split_model = CrossEncoder(section_split_model, num_labels=1)
 
         self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(self.path)
         self.generation_metadata = {
@@ -72,11 +72,11 @@ class PathwayGenerator():
         return self.converted_file
 
     def do_split(self, threshold=0.9):
-        return [
-            ['To refugees in Spain, namely those with a well-founded fear of being persecuted in their country for reasons of race, religion, nationality, political opinions, belonging to a particular social group, gender or sexual orientation', 'If you find yourself in any of the aforementioned situations and you need protection from the Spanish authorities, you must submit a request for international protection'],
-            ['You will have to attend an interview in which you must answer a series of questions regarding your personal data, and in which you must explain all the reasons for which you are applying for international protection at Office of Asylum Refugees and how you arrived in Spain'],
-            ['All applications, regardless of who submits them, are examined by the Office of Asylum and Refuge', 'Decisions are made by the Ministry of the Interior', 'For decisions on applications admitted for processing, the Ministry of the Interior decides at the proposal of the lnterministerial Commission for Asylum and Refuge']
-        ]
+        #return [
+        #    ['To refugees in Spain, namely those with a well-founded fear of being persecuted in their country for reasons of race, religion, nationality, political opinions, belonging to a particular social group, gender or sexual orientation', 'If you find yourself in any of the aforementioned situations and you need protection from the Spanish authorities, you must submit a request for international protection'],
+        #    ['You will have to attend an interview in which you must answer a series of questions regarding your personal data, and in which you must explain all the reasons for which you are applying for international protection at Office of Asylum Refugees and how you arrived in Spain'],
+        #    ['All applications, regardless of who submits them, are examined by the Office of Asylum and Refuge', 'Decisions are made by the Ministry of the Interior', 'For decisions on applications admitted for processing, the Ministry of the Interior decides at the proposal of the lnterministerial Commission for Asylum and Refuge']
+        #]
         sentence_list = self.to_list()
 
         scores = []
@@ -229,7 +229,7 @@ class PathwayGenerator():
         return ner_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='en')#, section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='en', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
     full_ner_dict = {}
