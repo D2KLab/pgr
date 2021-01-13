@@ -280,7 +280,7 @@ def generate():
 
 # curl -i -F data='{"pilot"="Malaga","service"="Asylum Request"}' -F 'file=@/home/rizzo/Workspace/pgr/documentation/es/Asylum_and_Employment_Procedimiento_plazas.pdf' http://localhost:5000/v0.2/segment
 @app.route('/v0.2/segment', methods=['POST'])
-def generate():
+def segment():
     uploaded_file = request.files['file']
     filename = secure_filename(uploaded_file.filename)
     if filename != '':
@@ -300,7 +300,9 @@ def generate():
             pgr = PathwayGenerator(file_path=file_path, pilot=data['pilot'], service=data['service'], use_cuda=True, cuda_device=0, section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
 
         pgr.do_convert()
-        pgr.do_split()
+        document_sections = pgr.do_split()
+        
+        return pgr.sections_to_doccano(document_sections)
 
     return 'NOK', 400
 

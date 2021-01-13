@@ -85,8 +85,6 @@ class PathwayGenerator():
         sections = [] # sections = [['section1'], ['section2'], ... , ['sectionN']]
         section_text = []
         section_text.append(sentence_list[0])
-        print(scores)
-        input()
         for i in range(0, len(scores)):
             if scores[i] >= threshold:
                 section_text.append(sentence_list[i+1])              
