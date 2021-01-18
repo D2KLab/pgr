@@ -51,11 +51,13 @@ class PathwayGenerator():
         self.section_split_model = CrossEncoder(section_split_model, num_labels=1)
 
         self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(self.path)
-        self.generation_metadata = {
-            'where': pilot + ' - ' + service + ' - ' + 'Where - ' + os.path.basename(self.path) + ' - ',
-            'when': pilot + ' - ' + service + ' - ' + 'When - ' + os.path.basename(self.path) + ' - ',
-            'how': pilot + ' - ' + service + ' - ' + 'How - ' + os.path.basename(self.path) + ' - '
-        }
+        #self.generation_metadata = {
+        #    'where': pilot + ' - ' + service + ' - ' + 'Where - ' + os.path.basename(self.path) + ' - ',
+        #    'when': pilot + ' - ' + service + ' - ' + 'When - ' + os.path.basename(self.path) + ' - ',
+        #    'how': pilot + ' - ' + service + ' - ' + 'How - ' + os.path.basename(self.path) + ' - '
+        #}
+
+        self.generation_metadata = pilot + ' - ' + service + ' - ' + os.path.basename(self.path) + ' - '
 
     def to_list(self):
         element_list = [] # Make an empty list
@@ -171,7 +173,7 @@ class PathwayGenerator():
             
 
             for step, step_dict in pathway[key].items():
-                tmp_dict["meta"] = self.generation_metadata[step] + key
+                tmp_dict["meta"] = self.generation_metadata + key
                 for sub_type, entities in step_dict.items():
                     label = dict_translations[self.language][step] + ' - ' + dict_translations[self.language][sub_type] + ': '
                     if len(entities) == 0:

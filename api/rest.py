@@ -238,35 +238,35 @@ def generate():
 
         # Check if document already exists: if so, return annotations. Otherwise, create a new one
         if document_annotation:
-            annotations = doccano_client.get_annotation_list(annotation_project['id'], document_annotation['id'])
+            annotations = doccano_client.get_annotation_list(annotation_project['id'], document_annotation[0]['id'])
             
-            pgr.ner_dict = doccano_to_dict_format(annotations, document_annotation, annotation_project['id'])
+            pgr.ner_dict = doccano_to_dict_format(annotations, document_annotation[0], annotation_project['id'])
             
-        else:
-            converted_file = pgr.do_convert()
-            #app.config['logger'].log()
-            ner_dict = pgr.do_annotate(pgr.to_list())
-            doccano_dict, ner_path = pgr.export_annotation_to_doccano()
-            try:
-                doccano_client.post_doc_upload(project_id=annotation_project['id'], file_format='json', file_name=ner_path)
-            except json.decoder.JSONDecodeError:
-                pass
-            sections = pgr.do_split()
-            full_ner_dict = {}
-            count = 1
-            for section in sections:
-                pgr.annotation_model.reset_preprocesser()
-                ner_dict = pgr.do_annotate(section)
-                pathway = pgr.do_generate()
-                label = 'Step'+str(count)
-                full_ner_dict[label] = pathway
-                count = count + 1
-            pathway_dict, pathway_path = pgr.export_generation_to_doccano(full_ner_dict)
-            #print(pathway_dict)
-            #app.config['logger'].log()
-
-        #pathway = pgr.do_generate()
+        
+        converted_file = pgr.do_convert()
         #app.config['logger'].log()
+        ner_dict = pgr.do_annotate(pgr.to_list())
+        doccano_dict, ner_path = pgr.export_annotation_to_doccano()
+        try:
+            doccano_client.post_doc_upload(project_id=annotation_project['id'], file_format='json', file_name=ner_path)
+        except json.decoder.JSONDecodeError:
+            pass
+        sections = pgr.do_split()
+        full_ner_dict = {}
+        count = 1
+        for section in sections:
+            pgr.annotation_model.reset_preprocesser()
+            ner_dict = pgr.do_annotate(section)
+            pathway = pgr.do_generate()
+            label = 'Step'+str(count)
+            full_ner_dict[label] = pathway
+            count = count + 1
+        pathway_dict, pathway_path = pgr.export_generation_to_doccano(full_ner_dict)
+        #print(pathway_dict)
+        #app.config['logger'].log()
+
+    #pathway = pgr.do_generate()
+    #app.config['logger'].log()
 
         try:
             print('Uploading documents')
