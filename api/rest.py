@@ -82,11 +82,12 @@ def get_document(metadata, project_id):
     document = []
 
     for doc in document_list['results']:
-        if doc['meta'].startswith("'") and doc['meta'].endswith("'"):
-            meta = doc['meta'].replace('"', '')
-        if doc['meta'].startswith('"') and doc['meta'].endswith('"'):
-            meta = doc['meta'].replace('"', '')
-        if metadata in meta:
+        #if doc['meta'].startswith("'") and doc['meta'].endswith("'"):
+        #    meta = doc['meta'].replace('"', '')
+        #if doc['meta'].startswith('"') and doc['meta'].endswith('"'):
+        #    meta = doc['meta'].replace('"', '')
+        meta = doc['meta'].split(' - ')[2]
+        if metadata.split(' - ')[2] == meta:
             document.append(doc)
 
     if len(document) > 0:

@@ -8,4 +8,8 @@ cd doccano_api_client
 pip3 install -e ./
 cd ..
 
+cd sentence-transformers
+pip3 install -e ./
+cd ..
+
 python3 api/rest.py
