@@ -1,5 +1,5 @@
-[    
-    {
+{ 
+    "Step 1":{
         "text": "Step 1",
         "labels": ["where - website: https://sede.administracionespublicas.gob.es/icpplus/index.html",
         "where - physical_offices: -", 
@@ -10,7 +10,7 @@
         ],
         "meta": "Malaga - Asylum Request"
     },
-    {
+    "Step 2":{
         "text": "Step 2",
         "labels": ["where - website: -",
         "where - physical_offices: -", 
@@ -21,7 +21,7 @@
         ],
         "meta": "Malaga - Asylum Request"
     },    
-    {
+    "Step 3":{
         "text": "Step 3",
         "labels": ["where - website: -",
         "where - physical_offices: Policía Nacional", 
@@ -32,5 +32,4 @@
         ],
         "meta": "Malaga - Asylum Request"
     }
-        
-]
+}

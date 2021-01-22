@@ -313,7 +313,7 @@ def retrieve_pathways():
     data = json.loads(request.form['data'])
 
     if data['pilot'].strip().lower() == 'malaga' and data['service'].strip().lower() == 'asylum request':
-        return json.loads(open('api/malaga_pathway.json', 'r'))
+        return json.loads(open('api/malaga_pathway.json', 'r').read())
 
     
     return 'There has been some error', 400
