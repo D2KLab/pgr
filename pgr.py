@@ -243,7 +243,7 @@ class PathwayGenerator():
         return doccano_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='en', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='el', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
     file_out = open('section_log.jsonl', 'w', encoding='utf-8')

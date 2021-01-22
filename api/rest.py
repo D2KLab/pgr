@@ -270,8 +270,9 @@ def generate():
     #app.config['logger'].log()
 
         try:
-            print('Uploading documents')
-            doccano_client.post_doc_upload(project_id=generation_project['id'], file_format='json', file_name=pathway_path)
+            #print('Uploading documents')
+            if count < 50:
+                doccano_client.post_doc_upload(project_id=generation_project['id'], file_format='json', file_name=pathway_path)
         except json.decoder.JSONDecodeError:
             pass
 
@@ -306,6 +307,16 @@ def segment():
         return pgr.sections_to_doccano(document_sections)
 
     return 'NOK', 400
+# curl -X POST -F data='{"pilot":"Malaga","service":"Asylum Request"}' http://easyrights.linksfoundation.com/v0.3/generate
+@app.route('/v0.3/generate', methods=['POST'])
+def retrieve_pathways():
+    data = json.loads(request.form['data'])
+
+    if data['pilot'].strip().lower() == 'malaga' and data['service'].strip().lower() == 'asylum request':
+        return json.loads(open('api/malaga_pathway.json', 'r'))
+
+    
+    return 'There has been some error', 400
 
 if __name__ == '__main__':
     app.config['logger'] = CustomLogger('log/pgr.log')
