@@ -314,9 +314,10 @@ def retrieve_pathways():
 
     if data['pilot'].strip().lower() == 'malaga' and data['service'].strip().lower() == 'asylum request':
         return json.loads(open('api/malaga_pathway.json', 'r').read())
+    if data['pilot'].strip().lower() == 'birmingham' and data['service'].strip().lower() == 'clean air zone':
+        return json.loads(open('api/birmingham_pathway.json', 'r').read())
 
-    
-    return 'There has been some error', 400
+    return 'Service not available yet. Supported services: ', 400
 
 if __name__ == '__main__':
     app.config['logger'] = CustomLogger('log/pgr.log')
