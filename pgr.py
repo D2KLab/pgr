@@ -62,7 +62,7 @@ class PathwayGenerator():
     def to_list(self):
         element_list = [] # Make an empty list
 
-        for element in re.split('[.\n]', self.converted_file):
+        for element in re.split('\n', self.converted_file):
             stripped_element = element.strip()
             if stripped_element != '':	    
                 element_list.append(stripped_element) #Append to list the striped element
@@ -243,12 +243,9 @@ class PathwayGenerator():
         return doccano_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='el', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='it', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
-    file_out = open('section_log.jsonl', 'w', encoding='utf-8')
-    test_section = pgr.sections_to_doccano(sections)
-    file_out.write(json.dumps(test_section))
     full_ner_dict = {}
     count = 1
     for section in sections:
