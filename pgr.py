@@ -43,8 +43,8 @@ class PathwayGenerator():
         self.cuda_device = cuda_device
         self.language = languages[pilot]
         # TODO: language detection param?
-        if annotation_model is None:
-            self.annotation_model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
+        if len(annotation_model) != 2:
+            self.annotation_model = Transner(pretrained_model=annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
         else:
             self.annotation_model = Transner(pretrained_model='bert_uncased_'+annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
 
@@ -243,7 +243,7 @@ class PathwayGenerator():
         return doccano_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='it', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='bert_uncased_base_easyrights_v0.2_it.tar.gz', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
     full_ner_dict = {}
