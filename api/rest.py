@@ -266,9 +266,6 @@ def generate():
         #print(pathway_dict)
         #app.config['logger'].log()
 
-    #pathway = pgr.do_generate()
-    #app.config['logger'].log()
-
         try:
             #print('Uploading documents')
             if count < 50:
@@ -316,8 +313,10 @@ def retrieve_pathways():
         return json.loads(open('api/malaga_pathway.json', 'r').read())
     if data['pilot'].strip().lower() == 'birmingham' and data['service'].strip().lower() == 'clean air zone':
         return json.loads(open('api/birmingham_pathway.json', 'r').read())
+    if data['pilot'].strip().lower() == 'palermo' and data['service'].strip().lower() == 'registrazione anagrafe':
+        return json.loads(open('api/palermo_pathway.json', 'r').read())
 
-    return 'Service not available yet. Supported services: ', 400
+    return 'Service not available yet. Supported services: \n asylum request in Malaga, \n clean air zone in Birmingham, \n registrazione anagrafe a Palermo', 400
 
 if __name__ == '__main__':
     app.config['logger'] = CustomLogger('log/pgr.log')

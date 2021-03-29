@@ -12,4 +12,4 @@ cd sentence-transformers
 pip3 install -e ./
 cd ..
 
-python3 api/rest.py
+nohup python3 api/rest.py > rest_log.out &
