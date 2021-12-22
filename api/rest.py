@@ -82,10 +82,6 @@ def get_document(metadata, project_id):
     document = []
 
     for doc in document_list['results']:
-        #if doc['meta'].startswith("'") and doc['meta'].endswith("'"):
-        #    meta = doc['meta'].replace('"', '')
-        #if doc['meta'].startswith('"') and doc['meta'].endswith('"'):
-        #    meta = doc['meta'].replace('"', '')
         meta = doc['meta'].split(' - ')[2]
         if metadata.split(' - ')[2] == meta:
             document.append(doc)
@@ -133,7 +129,6 @@ def doccano_to_dict_format(annotation_list, document, project_id):
     ner_dict['entities'] = []
     for annotation in annotation_list:
         element_dict = {}
-        #annotation_detail = doccano_client.get_annotation_detail(project_id, annotation['document'], annotation['id'])
         label = doccano_client.get_label_detail(project_id, annotation['label'])
 
         element_dict['start_offset'] = annotation['start_offset']
@@ -173,7 +168,6 @@ def annotate():
 
         # Check for annotation project
         project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Annotated Documents')
-        #app.config['logger'].log()
 
         # Check if document already exists: if so, return annotations. Otherwise, create a new one
         document = get_document(pgr.annotation_metadata, project['id'])
@@ -181,14 +175,10 @@ def annotate():
             return refactor_export_annotations(document[0], project['id'])
 
         converted_file = pgr.do_convert()
-        #app.config['logger'].log()
 
         ner_dict = pgr.do_annotate(pgr.to_list())
-        #app.config['logger'].log()
-        print(ner_dict)
 
         doccano_dict, ner_path = pgr.export_annotation_to_doccano()
-        #app.config['logger'].log()
 
         # WARNING: current issue of file upload/download Response -> https://github.com/doccano/doccano-client/issues/13
         try:
@@ -224,17 +214,13 @@ def generate():
         # Check for projects
         generation_project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Pathways')
         annotation_project = get_project_by_name('ER ' + pilots_legend[data['pilot']] + ' Annotated Documents')
-        #app.config['logger'].log()
+
         # Check if document already exists: if so, return annotations. Otherwise, create a new one
         document_annotation = get_document(pgr.annotation_metadata, annotation_project['id'])
         document_generation = get_document(pgr.generation_metadata, generation_project['id'])
-        if document_generation:
-            #document_where = get_document(pgr.generation_metadata['where'], generation_project['id']) 
-            #document_when = get_document(pgr.generation_metadata['when'], generation_project['id'])
-            #document_how = get_document(pgr.generation_metadata['how'], generation_project['id'])
-            
+        if document_generation:          
             document_generation = sorted(document_generation, key=lambda x: int("".join([i for i in x['text'] if i.isdigit()])))
-            #document_generation = sorted(document_generation, key = lambda x: x['text'])
+
             return refactor_export_generations(document_generation)
 
         # Check if document already exists: if so, return annotations. Otherwise, create a new one
@@ -245,7 +231,7 @@ def generate():
             
         
         converted_file = pgr.do_convert()
-        #app.config['logger'].log()
+
         ner_dict = pgr.do_annotate(pgr.to_list())
         doccano_dict, ner_path = pgr.export_annotation_to_doccano()
         try:
@@ -263,11 +249,8 @@ def generate():
             full_ner_dict[label] = pathway
             count = count + 1
         pathway_dict, pathway_path = pgr.export_generation_to_doccano(full_ner_dict)
-        #print(pathway_dict)
-        #app.config['logger'].log()
 
         try:
-            #print('Uploading documents')
             if count < 50:
                 doccano_client.post_doc_upload(project_id=generation_project['id'], file_format='json', file_name=pathway_path)
         except json.decoder.JSONDecodeError:
@@ -309,14 +292,29 @@ def segment():
 def retrieve_pathways():
     data = json.loads(request.form['data'])
 
-    if data['pilot'].strip().lower() == 'malaga' and data['service'].strip().lower() == 'asylum request':
-        return json.loads(open('api/malaga_pathway.json', 'r').read())
-    if data['pilot'].strip().lower() == 'birmingham' and data['service'].strip().lower() == 'clean air zone':
-        return json.loads(open('api/birmingham_pathway.json', 'r').read())
-    if data['pilot'].strip().lower() == 'palermo' and data['service'].strip().lower() == 'registrazione anagrafe':
-        return json.loads(open('api/palermo_pathway.json', 'r').read())
+    if data['pilot'].strip().lower() == 'malaga':
+        if data['service'].strip().lower() == 'asylum request':
+            return json.loads(open('api/pathways/asylum_request_malaga_pathway.json', 'r').read())
+        if data['service'].strip().lower() == 'work permission':
+            return json.loads(open('api/pathways/work_permission_malaga_pathway.json', 'r').read())
+    if data['pilot'].strip().lower() == 'birmingham':
+        if data['service'].strip().lower() == 'clean air zone':
+            return json.loads(open('api/pathways/caz_birmingham_pathway.json', 'r').read())
+        if data['service'].strip().lower() == 'baes esol':
+            return json.loads(open('api/pathways/baes_esol_birmingham_pathway.json', 'r').read())
+    if data['pilot'].strip().lower() == 'palermo' and data['service'].strip().lower() == 'registration at registry office':
+        return json.loads(open('api/pathways/registry_office_palermo_pathway.json', 'r').read())
+    if data['pilot'].strip().lower() == 'larissa':
+        if data['service'].strip().lower() == 'certification of nationality':
+            return json.loads(open('api/pathways/nationality_certification_larissa_pathway.json', 'r').read())
+        if data['service'].strip().lower() == 'birth certification':
+            return json.loads(open('api/pathways/birth_certificate_larissa_pathway.json', 'r').read())  
 
-    return 'Service not available yet. Supported services: \n asylum request in Malaga, \n clean air zone in Birmingham, \n registrazione anagrafe a Palermo', 400
+    return 'Service not available yet. Supported services: \n asylum request in Malaga, \n clean air zone in Birmingham, \n registration at registry office in Palermo, \n certification of residence in Larissa', 400
+
+@app.route("/alive", methods=['GET'])
+def alive ():
+    return "OK", 200
 
 if __name__ == '__main__':
     app.config['logger'] = CustomLogger('log/pgr.log')
