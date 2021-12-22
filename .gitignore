@@ -32,3 +32,6 @@ output/
 models/
 config.py
 rest_log.out
+
+api/pathways
+section_log.jsonl

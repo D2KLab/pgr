@@ -1,4 +1,5 @@
 #!/bin/bash
+kill -9 $(ps -efl | grep easyrights | grep rest.py | grep -v grep | awk '{print $4}')
 
 python3 -m venv env
 source env/bin/activate
