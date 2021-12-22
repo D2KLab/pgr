@@ -15,7 +15,14 @@ import importlib
 sutime_mod = importlib.import_module("python-sutime.sutime")
 
 class PathwayGenerator():
-    def __init__(self, file_path, pilot, service, use_cuda=False, cuda_device=-1, annotation_model=None, section_split_model=None):
+    def __init__(self, 
+                file_path, 
+                pilot, 
+                service, 
+                use_cuda=False, 
+                cuda_device=-1, 
+                annotation_model='en', 
+                section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base/pytorch_model.bin'):
 
         ''' PathwayGenerator object constructor
 
@@ -25,6 +32,8 @@ class PathwayGenerator():
             service (str): name of the service considered.
             use_cuda (bool): flag to use gpu model.
             cuda_device (int, optional): Id of the gpu device to use. Defaults to -1.
+            annotation_model (str, optional): The name of the annotation model
+            section_split_model (str, optional): The name of the section splitter model
         '''
 
         assert file_path is not None, "A file path is required"
@@ -43,26 +52,21 @@ class PathwayGenerator():
         self.cuda_device = cuda_device
         self.language = languages[pilot]
         # TODO: language detection param?
-        if len(annotation_model) != 2:
-            self.annotation_model = Transner(pretrained_model=annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
+        if annotation_model is None:
+            self.annotation_model = Transner(pretrained_model='bert_uncased_base_easyrights_v0.1', use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
         else:
             self.annotation_model = Transner(pretrained_model='bert_uncased_'+annotation_model, use_cuda=use_cuda, cuda_device=cuda_device, language_detection=True, threshold=0.85, args={"use_multiprocessing": False})
 
         self.section_split_model = CrossEncoder(section_split_model, num_labels=1)
 
         self.annotation_metadata = metadata = pilot + ' - ' + service + ' - ' + os.path.basename(self.path)
-        #self.generation_metadata = {
-        #    'where': pilot + ' - ' + service + ' - ' + 'Where - ' + os.path.basename(self.path) + ' - ',
-        #    'when': pilot + ' - ' + service + ' - ' + 'When - ' + os.path.basename(self.path) + ' - ',
-        #    'how': pilot + ' - ' + service + ' - ' + 'How - ' + os.path.basename(self.path) + ' - '
-        #}
 
         self.generation_metadata = pilot + ' - ' + service + ' - ' + os.path.basename(self.path) + ' - '
 
     def to_list(self):
         element_list = [] # Make an empty list
 
-        for element in re.split('\n', self.converted_file):
+        for element in re.split('[.\n]', self.converted_file):
             stripped_element = element.strip()
             if stripped_element != '':	    
                 element_list.append(stripped_element) #Append to list the striped element
@@ -84,7 +88,7 @@ class PathwayGenerator():
             score = self.section_split_model.predict([current_sentence, next_sentence])
             scores.append(score)
         
-        sections = [] # sections = [['section1'], ['section2'], ... , ['sectionN']]
+        sections = []
         section_text = []
         section_text.append(sentence_list[0])
         for i in range(0, len(scores)):
@@ -117,8 +121,7 @@ class PathwayGenerator():
         if os.path.splitext(self.path)[-1] == '.json':
             self.ner_dict = json.load(open(self.path, 'r'))
         aggregated_ner_dict = aggregator.aggregate_entities(self.ner_dict)
-        print(aggregated_ner_dict)
-        #aggregated_ner_dict = self.ner_dict = {'text': 'test 1 of the section 1.\ntest 2 of the section 1.\ntest 3 of the section 1.\n', 'entities': {'LOCATION': [{'value': 'test', 'confidence': 0.9737, 'start_offset': 0, 'end_offset': 4}], 'ORGANIZATION': [{'value': 'test', 'confidence': 0.9676, 'start_offset': 25, 'end_offset': 29}], 'TIME': [{'value': 'test', 'confidence': 0.9573, 'start_offset': 50, 'end_offset': 54}]}}
+
         json_pathway = generator.generate(aggregated_ner_dict)
         mapped_entities = json.loads(json_pathway)
 
@@ -126,7 +129,6 @@ class PathwayGenerator():
 
         self.pathway = {}
 
-        #{'physical_office': [{'start', 'end'}...]}
         for key, sub_types in dict_pathway.items():
             self.pathway[key] = {}
             for sub_type in sub_types:
@@ -134,8 +136,6 @@ class PathwayGenerator():
 
         for entity in mapped_entities:
             self.pathway[self.keys_of_value(dict_pathway, entity['step'])][entity['step']].append(entity)  
-        
-        # {'dove': [], 'come': [], 'quando': []}
 
         #todo: remove return because we can read the value in the pgr object
         return self.pathway
@@ -243,9 +243,12 @@ class PathwayGenerator():
         return doccano_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='bert_uncased_base_easyrights_v0.2_it', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='el', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
+    file_out = open('section_log.jsonl', 'w', encoding='utf-8')
+    test_section = pgr.sections_to_doccano(sections)
+    file_out.write(json.dumps(test_section))
     full_ner_dict = {}
     count = 1
     for section in sections:
@@ -285,14 +288,14 @@ if __name__ == '__main__':
         '-p',
         '--pilot',
         help='Specify pilot.',
-        required=False
+        required=True
     )
 
     parser.add_argument(
         '-s',
         '--service',
         help='Specify service.',
-        required=False
+        required=True
     )
     args = parser.parse_args()
 
