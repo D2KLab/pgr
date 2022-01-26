@@ -22,7 +22,7 @@ class PathwayGenerator():
                 use_cuda=False, 
                 cuda_device=-1, 
                 annotation_model='en', 
-                section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base/pytorch_model.bin'):
+                section_split_model='/home/easyrights/Documents/pgr/section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base/'):
 
         ''' PathwayGenerator object constructor
 
@@ -99,6 +99,8 @@ class PathwayGenerator():
                 section_text = []
                 section_text.append(sentence_list[i+1])
         sections.append(section_text)
+
+        print(sections)
 
         return sections
 
@@ -243,12 +245,9 @@ class PathwayGenerator():
         return doccano_dict
 
 def main(path=None, empty=False, convert=True, pilot='', service=''):
-    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0, annotation_model='el', section_split_model='section_split/models/training_unfolding_structure-2020-12-22_11-07-07_distilroberta-base')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=False, cuda_device=0)
     converted_file = pgr.do_convert()
     sections = pgr.do_split()
-    file_out = open('section_log.jsonl', 'w', encoding='utf-8')
-    test_section = pgr.sections_to_doccano(sections)
-    file_out.write(json.dumps(test_section))
     full_ner_dict = {}
     count = 1
     for section in sections:

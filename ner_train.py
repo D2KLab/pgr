@@ -30,9 +30,19 @@ print(cwd)
 from simpletransformers.ner.ner_model import NERModel
 
 # Create a NERModel
-model = NERModel('bert', 'bert-base-multilingual-uncased', args={'classification_report': True, 'output_dir': 'output_balanced/', 'overwrite_output_dir': True, 'do_lower_case': True, 'num_train_epochs': 5, 'fp16': False, 'train_batch_size': 32, 'eval_batch_size': 32, 'logging_steps': 2741, 'save_steps': 2741, 'evaluate_during_training': True}, cuda_device=1)
-#model = NERModel('bert', 'bert-base-multilingual-cased', args={'no_cache': True, 'classification_report': True, 'fp16': False, 'num_train_epochs': 4, 'train_batch_size': 32, 'eval_batch_size': 32, 'logging_steps': 2741, 'save_steps': 2741, 'evaluate_during_training': True})
-#model.predict(["Mr. Robinson"])
+model = NERModel('bert', 'bert-base-multilingual-uncased', 
+                args={'classification_report': True, 
+                'output_dir': 'output_balanced/', 
+                'overwrite_output_dir': True, 
+                'do_lower_case': True, 
+                'num_train_epochs': 5, 
+                'fp16': False, 
+                'train_batch_size': 32, 
+                'eval_batch_size': 32, 
+                'logging_steps': 2741, 
+                'save_steps': 2741, 
+                'evaluate_during_training': True}, 
+                cuda_device=1)
 
 # Train the model
 model.train_model('multilang_conll_balanced/mlang.conll.train', eval_df='multilang_conll_balanced/mlang.conll.val')

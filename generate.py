@@ -4,9 +4,9 @@ import os
 from pgr import PathwayGenerator
 
 def main(path, pilot, service):   
-    pgr = PathwayGenerator(path=path, pilot=pilot, service=service, use_cuda=True, cuda_device=4, model='en')
+    pgr = PathwayGenerator(file_path=path, pilot=pilot, service=service, use_cuda=True, cuda_device=4)
     pathway = pgr.do_generate()
-    pathway_dict, pathway_path = pgr.export_generation_to_doccano()
+    pathway_dict, pathway_path = pgr.export_generation_to_doccano(pathway={'Step1': pathway})
 
     print('Generation process ended. You can find the jsonl at the following path: {}'.format(pathway_path))
 
