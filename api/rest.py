@@ -296,8 +296,6 @@ def retrieve_pathways():
     service = data['service'].strip().lower()
     supported_services = json.load(open("api/pathways/supported_services.json", 'r'))
 
-    print(open(supported_services[pilot][service], 'r').read())
-
     try:
         return json.loads(open(supported_services[pilot][service], 'r').read())
     except KeyError:
