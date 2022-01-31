@@ -292,25 +292,16 @@ def segment():
 def retrieve_pathways():
     data = json.loads(request.form['data'])
 
-    if data['pilot'].strip().lower() == 'malaga':
-        if data['service'].strip().lower() == 'asylum request':
-            return json.loads(open('api/pathways/asylum_request_malaga_pathway.json', 'r').read())
-        if data['service'].strip().lower() == 'work permission':
-            return json.loads(open('api/pathways/work_permission_malaga_pathway.json', 'r').read())
-    if data['pilot'].strip().lower() == 'birmingham':
-        if data['service'].strip().lower() == 'clean air zone':
-            return json.loads(open('api/pathways/caz_birmingham_pathway.json', 'r').read())
-        if data['service'].strip().lower() == 'baes esol':
-            return json.loads(open('api/pathways/baes_esol_birmingham_pathway.json', 'r').read())
-    if data['pilot'].strip().lower() == 'palermo' and data['service'].strip().lower() == 'registration at registry office':
-        return json.loads(open('api/pathways/registry_office_palermo_pathway.json', 'r').read())
-    if data['pilot'].strip().lower() == 'larissa':
-        if data['service'].strip().lower() == 'certification of nationality':
-            return json.loads(open('api/pathways/nationality_certification_larissa_pathway.json', 'r').read())
-        if data['service'].strip().lower() == 'birth certification':
-            return json.loads(open('api/pathways/birth_certificate_larissa_pathway.json', 'r').read())  
+    pilot = data['pilot'].strip().lower()
+    service = data['service'].strip().lower()
+    supported_services = json.load(open("api/pathways/supported_services.json", 'r'))
 
-    return 'Service not available yet. Supported services: \n asylum request in Malaga, \n clean air zone in Birmingham, \n registration at registry office in Palermo, \n certification of residence in Larissa', 400
+    print(open(supported_services[pilot][service], 'r').read())
+
+    try:
+        return json.loads(open(supported_services[pilot][service], 'r').read())
+    except KeyError:
+        return 'Service not available yet.', 400
 
 @app.route("/alive", methods=['GET'])
 def alive ():
