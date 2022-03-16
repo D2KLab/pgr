@@ -1,6 +1,6 @@
-# Transner and doc2txt integration
+# Pathway Generator 
 
-This repo joins and extends the works present in Transer (https://github.com/D2KLab/Transner) and doc2txt(https://github.com/D2KLab/doc2txt): please see this two repositories in order to get started.
+This repository contains the implementation of the Pathway Generator. It is developed in the context of the [H2020 easyRights project](https://www.easyrights.eu/) and implements state-of-the-art NLP technonoliges to translate verbose and lengthy documents describing processes such as Asylum Seeking into a set of actionable, step-wise, instructions in a format that we call Pathway.
 
 # Setup virtual environment
 
@@ -25,27 +25,16 @@ Once your virtual is activated, you can install the external libraries:
 pip3 install -r requirements.txt
 ```
 
-# Pipe
-
-## convert
-
-## annotate
-
-``` .... 
+Enable doccano client
+```bash
+cd doccano_api_client
+pip3 install -e ./
+cd ..
 ```
 
-for training
-
-In the ner_train.py you need to edit the line:
+Enable the library that is utilized to numerize sentences
+```bash
+cd sentence-transformers
+pip3 install -e ./
+cd ..
 ```
-model.train_model(<path_to_dataset_train>, eval_df=<path_to_dataset_val>)
-```
-inserting the correct paths to the train and val datasets.
-
-```
-python3 ner_train.py
-```
-
-## aggregate
-
-## generate
