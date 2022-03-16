@@ -38,3 +38,6 @@ cd sentence-transformers
 pip3 install -e ./
 cd ..
 ```
+
+# Requirements
+Doccano to store the output of the annotations and the pathway generation. Check api/rest.py to insert credentials.
