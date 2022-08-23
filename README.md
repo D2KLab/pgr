@@ -41,3 +41,10 @@ cd ..
 
 # Requirements
 Doccano to store the output of the annotations and the pathway generation. Check api/rest.py to insert credentials.
+
+# Usage
+To use the pathway generator send a POST request with the following command line:
+
+```bash
+curl -X POST -F data='{"pilot":"birmingham","service":"clean air zone"}' https://easyrights.linksfoundation.com/v0.3/generate
+```
